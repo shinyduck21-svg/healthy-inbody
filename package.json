@@ -1,5 +1,5 @@
 {
-  "name": "healty-inbody-manager",
+  "name": "mongfit-inbody-manager",
   "version": "1.0.0",
   "description": "회원 인바디 기록 관리 웹앱",
   "main": "server/index.js",

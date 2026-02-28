@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'healty_secret_key_2024_very_long_string';
+const JWT_SECRET = process.env.JWT_SECRET || 'mongfit_secret_key_2024_very_long_string';
 const JWT_EXPIRES_IN = '8h';
 
 /**

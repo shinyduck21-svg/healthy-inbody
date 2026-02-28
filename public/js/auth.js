@@ -4,8 +4,8 @@
  * 인증이 필요한 API 요청을 위한 헤더를 생성합니다.
  */
 
-const TOKEN_KEY = 'healty_token';
-const ADMIN_KEY = 'healty_admin';
+const TOKEN_KEY = 'mongfit_token';
+const ADMIN_KEY = 'mongfit_admin';
 
 /**
  * 토큰 저장

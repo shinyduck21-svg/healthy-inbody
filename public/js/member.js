@@ -34,7 +34,7 @@ async function loadMember() {
 }
 
 function renderMemberInfo(m) {
-    document.title = `Healty - ${m.name}`;
+    document.title = `${m.name} - MongFit`;
     const genderLabel = m.gender === 'M' ? '남성' : m.gender === 'F' ? '여성' : '미기입';
     const avatarClass = m.gender === 'M' ? 'avatar-male' : m.gender === 'F' ? 'avatar-female' : 'avatar-default';
 

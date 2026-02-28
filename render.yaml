@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: healty-inbody
+    name: mongfit
     env: node
     plan: free
     buildCommand: npm install

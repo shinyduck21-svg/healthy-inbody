@@ -1,4 +1,4 @@
-# Healty 인바디 관리 프로젝트 작업 현황
+# MongFit 인바디 관리 프로젝트 작업 현황
 
 ## 진행 중인 작업 (In Progress)
 - [/] GitHub Push 및 Render 재배포 확인

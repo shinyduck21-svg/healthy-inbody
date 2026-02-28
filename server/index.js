@@ -33,7 +33,7 @@ app.get('*', (req, res) => {
 // DB 초기화 후 서버 시작
 initDB().then(() => {
     app.listen(PORT, () => {
-        console.log(`🚀 Healty 서버가 실행 중입니다: http://localhost:${PORT}`);
+        console.log('🚀 MongFit 서버가 실행 중입니다: http://localhost:' + PORT);
     });
 }).catch(err => {
     console.error('서버 시작 실패:', err);

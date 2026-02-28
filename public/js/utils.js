@@ -1,5 +1,6 @@
 /**
- * utils.js - healty 프로젝트 공통 유틸리티
+ * utils.js
+ * MongFit 공통 유틸리티 함수
  * RULES.md 규정에 따른 필수 함수 정의
  */
 

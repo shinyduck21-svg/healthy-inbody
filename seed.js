@@ -28,7 +28,7 @@ async function seed() {
 
         for (const m of members) {
             const res = await client.query(
-                'INSERT INTO members (name, gender, birth_date, phone, memo) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+                'INSERT INTO members (name, gender, birth_date, phone, memo) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (name, phone) DO UPDATE SET memo = EXCLUDED.memo RETURNING id',
                 m
             );
             const memberId = res.rows[0].id;
@@ -41,6 +41,7 @@ async function seed() {
           INSERT INTO inbody_records 
           (member_id, measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, notes)
           VALUES ($1, $2, $3, $4, $5, $6, $7)
+          ON CONFLICT (member_id, measured_at) DO NOTHING
         `, r);
             }
         }

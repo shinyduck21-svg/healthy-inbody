@@ -26,7 +26,8 @@ async function initDB() {
         birth_date TEXT,
         phone TEXT,
         memo TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(name, phone)
       );
 
       CREATE TABLE IF NOT EXISTS inbody_records (
@@ -38,7 +39,8 @@ async function initDB() {
         body_fat REAL,
         body_fat_pct REAL,
         notes TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(member_id, measured_at)
       );
     `);
 
@@ -50,7 +52,7 @@ async function initDB() {
       console.log('✅ 기본 관리자 계정 생성: admin / admin123');
     }
 
-    console.log('✅ PostgreSQL(Supabase) DB 초기화 완료');
+    console.log('✅ PostgreSQL(Supabase) DB 초기화 완료 (MongFit)');
   } catch (err) {
     console.error('DB 초기화 오류:', err);
     throw err;
