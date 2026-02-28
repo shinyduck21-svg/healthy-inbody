@@ -58,7 +58,7 @@ function renderMembers(members) {
         const avatarClass = m.gender === 'M' ? 'avatar-male' : m.gender === 'F' ? 'avatar-female' : 'avatar-default';
         const initial = m.name.charAt(0);
         const genderLabel = m.gender === 'M' ? '남' : m.gender === 'F' ? '여' : '-';
-        const age = m.birth_date ? getAge(m.birth_date) + '세' : '-';
+        const age = m.age ? m.age + '세' : '-';
         const lastMeasured = m.last_measured ? formatDate(m.last_measured) : '기록 없음';
 
         return `
@@ -91,14 +91,6 @@ function renderMembers(members) {
     }).join('');
 }
 
-function getAge(birthDate) {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    return age;
-}
 
 function goToMember(id) {
     window.location.href = `/member?id=${id}`;
@@ -117,7 +109,7 @@ document.getElementById('addMemberBtn').addEventListener('click', () => {
     document.getElementById('editMemberId').value = '';
     document.getElementById('memberName').value = '';
     document.getElementById('memberGender').value = '';
-    document.getElementById('memberBirth').value = '';
+    document.getElementById('memberAge').value = '';
     document.getElementById('memberPhone').value = '';
     document.getElementById('memberMemo').value = '';
     document.getElementById('memberModal').classList.add('active');
@@ -136,7 +128,7 @@ function openEditModal(id) {
     document.getElementById('editMemberId').value = member.id;
     document.getElementById('memberName').value = member.name;
     document.getElementById('memberGender').value = member.gender || '';
-    document.getElementById('memberBirth').value = member.birth_date || '';
+    document.getElementById('memberAge').value = member.age || '';
     document.getElementById('memberPhone').value = member.phone || '';
     document.getElementById('memberMemo').value = member.memo || '';
     document.getElementById('memberModal').classList.add('active');
@@ -151,7 +143,7 @@ async function saveMember() {
     const body = {
         name,
         gender: document.getElementById('memberGender').value || null,
-        birth_date: document.getElementById('memberBirth').value || null,
+        age: document.getElementById('memberAge').value || null,
         phone: document.getElementById('memberPhone').value.trim() || null,
         memo: document.getElementById('memberMemo').value.trim() || null,
     };

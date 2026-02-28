@@ -44,7 +44,7 @@ function renderMemberInfo(m) {
     document.getElementById('memberSubtitle').textContent = `${genderLabel} · ${formatDate(m.created_at)} 등록`;
 
     document.getElementById('infoGender').textContent = genderLabel;
-    document.getElementById('infoBirth').textContent = m.birth_date ? formatDate(m.birth_date) : '-';
+    document.getElementById('infoAge').textContent = m.age ? m.age + '세' : '-';
     document.getElementById('infoPhone').textContent = m.phone || '-';
     document.getElementById('infoCreated').textContent = formatDate(m.created_at);
     document.getElementById('infoMemo').textContent = m.memo || '메모 없음';
@@ -444,7 +444,7 @@ document.getElementById('editMemberInfoBtn').addEventListener('click', () => {
     if (!memberData) return;
     document.getElementById('editName').value = memberData.name;
     document.getElementById('editGender').value = memberData.gender || '';
-    document.getElementById('editBirth').value = memberData.birth_date || '';
+    document.getElementById('editAge').value = memberData.age || '';
     document.getElementById('editPhone').value = memberData.phone || '';
     document.getElementById('editMemo').value = memberData.memo || '';
     document.getElementById('editMemberModal').classList.add('active');
@@ -457,7 +457,7 @@ async function saveMemberInfo() {
     const body = {
         name,
         gender: document.getElementById('editGender').value || null,
-        birth_date: document.getElementById('editBirth').value || null,
+        age: document.getElementById('editAge').value || null,
         phone: document.getElementById('editPhone').value.trim() || null,
         memo: document.getElementById('editMemo').value.trim() || null,
     };

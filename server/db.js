@@ -23,7 +23,7 @@ async function initDB() {
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         gender TEXT CHECK(gender IN ('M', 'F')),
-        birth_date TEXT,
+        age INTEGER,
         phone TEXT,
         memo TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW(),

@@ -21,14 +21,14 @@ async function seed() {
         console.log('✅ Connected! Inserting sample data...');
 
         const members = [
-            ['김철수', 'M', '1985-05-20', '010-1111-2222', '꾸준히 운동하시는 회원님'],
-            ['이영희', 'F', '1992-11-10', '010-3333-4444', '다이어트 목적으로 등록'],
-            ['박민수', 'M', '1978-02-15', '010-5555-6666', '재활 및 근력 강화']
+            ['김민수', 'M', 28, '010-1234-5678', '꾸준히 방문하는 우수 회원'],
+            ['이영희', 'F', 32, '010-8765-4321', '체지방 감량이 주 목표'],
+            ['박지성', 'M', 41, '010-5555-4444', null]
         ];
 
         for (const m of members) {
             const res = await client.query(
-                'INSERT INTO members (name, gender, birth_date, phone, memo) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (name, phone) DO UPDATE SET memo = EXCLUDED.memo RETURNING id',
+                'INSERT INTO members (name, gender, age, phone, memo) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (name, phone) DO UPDATE SET age = EXCLUDED.age, memo = EXCLUDED.memo RETURNING id',
                 m
             );
             const memberId = res.rows[0].id;

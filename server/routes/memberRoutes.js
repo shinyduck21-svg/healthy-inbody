@@ -47,12 +47,12 @@ router.get('/:id', async (req, res) => {
 // POST /api/members
 router.post('/', async (req, res) => {
     try {
-        const { name, gender, birth_date, phone, memo } = req.body;
+        const { name, gender, age, phone, memo } = req.body;
         if (!name) return res.status(400).json({ success: false, message: '이름은 필수입니다.' });
 
         const result = await db.run(
-            'INSERT INTO members (name, gender, birth_date, phone, memo) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-            [name, gender || null, birth_date || null, phone || null, memo || null]
+            'INSERT INTO members (name, gender, age, phone, memo) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [name, gender || null, age || null, phone || null, memo || null]
         );
         const newMember = await db.get('SELECT * FROM members WHERE id = $1', [result.lastInsertRowid]);
         res.status(201).json({ success: true, data: newMember });
@@ -65,13 +65,13 @@ router.post('/', async (req, res) => {
 // PUT /api/members/:id
 router.put('/:id', async (req, res) => {
     try {
-        const { name, gender, birth_date, phone, memo } = req.body;
+        const { name, gender, age, phone, memo } = req.body;
         const existing = await db.get('SELECT id FROM members WHERE id = $1', [req.params.id]);
         if (!existing) return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
 
         await db.run(
-            'UPDATE members SET name = $1, gender = $2, birth_date = $3, phone = $4, memo = $5 WHERE id = $6',
-            [name, gender || null, birth_date || null, phone || null, memo || null, req.params.id]
+            'UPDATE members SET name = $1, gender = $2, age = $3, phone = $4, memo = $5 WHERE id = $6',
+            [name, gender || null, age || null, phone || null, memo || null, req.params.id]
         );
         const updated = await db.get('SELECT * FROM members WHERE id = $1', [req.params.id]);
         res.json({ success: true, data: updated });
