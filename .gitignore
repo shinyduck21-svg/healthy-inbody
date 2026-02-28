@@ -1,0 +1,14 @@
+# 의존성
+node_modules/
+
+# 환경변수 (절대 GitHub에 올리면 안 됨!)
+.env
+
+# SQLite DB 파일 (더 이상 사용 안 함)
+*.db
+*.db-shm
+*.db-wal
+
+# 시스템 파일
+.DS_Store
+Thumbs.db

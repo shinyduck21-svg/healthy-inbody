@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: healty-inbody
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false # Render 대시보드에서 직접 입력해야 함
+      - key: JWT_SECRET
+        generateValue: true # 자동 생성하거나 대시보드에서 입력

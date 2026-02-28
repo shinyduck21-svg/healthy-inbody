@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Healty - 회원 관리 대시보드</title>
+    <meta name="description" content="Healty 회원 인바디 관리 대시보드" />
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+
+    <!-- 상단 네비게이션 -->
+    <nav class="navbar">
+        <div class="container navbar-inner">
+            <a href="/" class="navbar-brand">
+                <div class="navbar-logo">💪</div>
+                <span class="navbar-title">Healty</span>
+            </a>
+            <div class="navbar-right">
+                <div class="admin-badge">
+                    <div class="admin-dot"></div>
+                    <span id="adminName">관리자</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="logout()" id="logoutBtn">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="container">
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+            <div class="page-header-inner">
+                <div>
+                    <h1>회원 목록</h1>
+                    <p class="page-subtitle">인바디 기록을 관리할 회원을 선택하세요</p>
+                </div>
+                <button class="btn btn-primary" id="addMemberBtn">
+                    ＋ 회원 추가
+                </button>
+            </div>
+        </div>
+
+        <!-- 통계 카드 -->
+        <div class="stats-grid mb-3" style="display:grid; grid-template-columns: repeat(4,1fr); gap:1rem;">
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-primary">👥</div>
+                <div>
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">전체 회원</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-accent">♂</div>
+                <div>
+                    <div class="stat-value" id="statMale">0</div>
+                    <div class="stat-label">남성 회원</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-warning">♀</div>
+                <div>
+                    <div class="stat-value" id="statFemale">0</div>
+                    <div class="stat-label">여성 회원</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-success">📊</div>
+                <div>
+                    <div class="stat-value" id="statRecords">0</div>
+                    <div class="stat-label">총 측정 횟수</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 검색 -->
+        <div class="card mb-3" style="padding:1rem 1.5rem;">
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input class="form-input search-input" type="text" id="searchInput" placeholder="이름 또는 연락처로 검색..." />
+            </div>
+        </div>
+
+        <!-- 회원 카드 목록 -->
+        <div id="membersContainer">
+            <div class="members-grid" id="membersGrid"></div>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="empty-state-icon">👤</div>
+                <h3>등록된 회원이 없습니다</h3>
+                <p>우측 상단의 '회원 추가' 버튼으로 새 회원을 등록해 보세요.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ====== 회원 추가/편집 모달 ====== -->
+    <div class="modal-overlay" id="memberModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="memberModalTitle">회원 추가</h2>
+                <button class="close-btn" onclick="closeMemberModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editMemberId" />
+                <div class="form-grid mb-2">
+                    <div class="form-group">
+                        <label class="form-label" for="memberName">이름 *</label>
+                        <input class="form-input" type="text" id="memberName" placeholder="홍길동" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="memberGender">성별</label>
+                        <select class="form-select" id="memberGender">
+                            <option value="">선택 안 함</option>
+                            <option value="M">남성</option>
+                            <option value="F">여성</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-grid mb-2">
+                    <div class="form-group">
+                        <label class="form-label" for="memberBirth">생년월일</label>
+                        <input class="form-input" type="date" id="memberBirth" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="memberPhone">연락처</label>
+                        <input class="form-input" type="tel" id="memberPhone" placeholder="010-0000-0000" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="memberMemo">메모</label>
+                    <textarea class="form-textarea" id="memberMemo" placeholder="특이사항, 목표 등"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeMemberModal()">취소</button>
+                <button class="btn btn-primary" id="saveMemberBtn" onclick="saveMember()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 회원 삭제 확인 모달 ====== -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="max-width:380px;">
+            <div class="modal-header">
+                <h2 class="modal-title">회원 삭제</h2>
+                <button class="close-btn"
+                    onclick="document.getElementById('deleteModal').classList.remove('active')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="color:var(--text-secondary);">
+                    <strong id="deleteMemberName" style="color:var(--text-primary)"></strong> 회원을 삭제하면 모든 인바디 기록도 함께
+                    삭제됩니다. 계속하시겠습니까?
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('deleteModal').classList.remove('active')">취소</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+
+</html>
