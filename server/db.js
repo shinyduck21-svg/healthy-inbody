@@ -3,8 +3,8 @@ const bcrypt = require('bcryptjs');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  connectionTimeoutMillis: 30000 // 30초 타임아웃
+  ssl: { rejectUnauthorized: false }, // Supabase는 로컬/운영 모두 SSL 필요
+  connectionTimeoutMillis: 30000
 });
 
 // DB 초기화: 테이블 생성 및 기본 관리자 계정 생성
@@ -37,14 +37,6 @@ async function initDB() {
         skeletal_muscle REAL,
         body_fat REAL,
         body_fat_pct REAL,
-        bmi REAL,
-        bmr REAL,
-        visceral_fat INTEGER,
-        arm_right REAL,
-        arm_left REAL,
-        torso REAL,
-        leg_right REAL,
-        leg_left REAL,
         notes TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );

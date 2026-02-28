@@ -1,8 +1,7 @@
 # Healty 인바디 관리 프로젝트 작업 현황
 
 ## 진행 중인 작업 (In Progress)
-- [/] GitHub 저장소 생성 및 코드 업로드
-- [/] Render 서비스 연동 및 환경 변수 설정
+- [/] GitHub Push 및 Render 재배포 확인
 - [/] 대시보드 및 상세 페이지 UI/UX 프리미엄화
 
 ## 완료된 작업 (Completed)
@@ -11,5 +10,6 @@
 - [x] 데이터베이스 시스템 1차 전환 (PostgreSQL -> SQLite)
 - [x] 외부 접속 요구에 따른 Supabase(PostgreSQL) 복구 및 연동 가이드 제공
 - [x] Supabase 연결 시 'Tenant not found' 오류 디버깅 및 `.env` 최적화
-- [x] 샘플 데이터(회원 3명, 인바디 기록 각 2개) 삽입 및 검증
-- [x] 수동 가동을 위한 `setup.bat` 생성 및 안내
+- [x] Supabase Transaction Pooler 활성화 및 Render 환경 변수 최종 교정 `[x]`
+- [x] 데이터 필드 간소화 (기초대사량, BMI, 부위별 근육량 등 제거) `[x]`
+- [x] 샘플 데이터 시딩 (핵심 필드 중심) `[x]`

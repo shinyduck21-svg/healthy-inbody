@@ -77,17 +77,14 @@ function renderLatestSummary(records) {
         { label: '체중', value: fmtNum(latest.weight, 'kg'), key: 'weight' },
         { label: '골격근량', value: fmtNum(latest.skeletal_muscle, 'kg'), key: 'skeletal_muscle' },
         { label: '체지방량', value: fmtNum(latest.body_fat, 'kg'), key: 'body_fat' },
-        { label: '체지방률', value: fmtNum(latest.body_fat_pct, '%'), key: 'body_fat_pct' },
-        { label: 'BMI', value: fmtNum(latest.bmi), key: 'bmi' },
-        { label: '기초대사', value: fmtNum(latest.bmr, 'kcal'), key: 'bmr' },
-        { label: '내장지방', value: latest.visceral_fat != null ? latest.visceral_fat + '단계' : '-', key: 'visceral_fat' },
+        { label: '체지방률', value: fmtNum(latest.body_fat_pct, '%'), key: 'body_fat_pct' }
     ];
 
     document.getElementById('latestSummary').innerHTML = items.map(item => {
         let diffHtml = '';
         if (prev && latest[item.key] != null && prev[item.key] != null) {
             const diff = (parseFloat(latest[item.key]) - parseFloat(prev[item.key])).toFixed(1);
-            const isGood = (item.key === 'weight' || item.key === 'body_fat' || item.key === 'body_fat_pct' || item.key === 'bmi' || item.key === 'visceral_fat')
+            const isGood = (item.key === 'weight' || item.key === 'body_fat' || item.key === 'body_fat_pct')
                 ? parseFloat(diff) <= 0 : parseFloat(diff) >= 0;
             const color = parseFloat(diff) === 0 ? 'var(--text-muted)' : (isGood ? 'var(--success)' : 'var(--danger)');
             const arrow = parseFloat(diff) > 0 ? '▲' : parseFloat(diff) < 0 ? '▼' : '—';
@@ -324,9 +321,6 @@ function renderRecordsTable(records) {
       <td>${fmtNum(r.skeletal_muscle)}</td>
       <td>${fmtNum(r.body_fat)}</td>
       <td>${fmtNum(r.body_fat_pct)}</td>
-      <td>${fmtNum(r.bmi)}</td>
-      <td>${r.bmr ? Math.round(r.bmr) : '-'}</td>
-      <td>${r.visceral_fat != null ? r.visceral_fat : '-'}</td>
       <td style="text-align:center;">
         <div class="flex gap-1" style="justify-content:center;">
           <button class="btn btn-icon btn-sm" title="편집" onclick="openEditInbody(${r.id})">✏️</button>
@@ -351,8 +345,7 @@ function closeInbodyModal() {
 }
 
 function clearInbodyForm() {
-    ['ibMeasuredAt', 'ibWeight', 'ibSkeletal', 'ibBodyFat', 'ibBodyFatPct', 'ibBmi',
-        'ibBmr', 'ibVisceralFat', 'ibArmRight', 'ibArmLeft', 'ibTorso', 'ibLegRight', 'ibLegLeft', 'ibNotes']
+    ['ibMeasuredAt', 'ibWeight', 'ibSkeletal', 'ibBodyFat', 'ibBodyFatPct', 'ibNotes']
         .forEach(id => document.getElementById(id).value = '');
 }
 
@@ -368,14 +361,6 @@ function openEditInbody(id) {
     document.getElementById('ibSkeletal').value = r.skeletal_muscle ?? '';
     document.getElementById('ibBodyFat').value = r.body_fat ?? '';
     document.getElementById('ibBodyFatPct').value = r.body_fat_pct ?? '';
-    document.getElementById('ibBmi').value = r.bmi ?? '';
-    document.getElementById('ibBmr').value = r.bmr ?? '';
-    document.getElementById('ibVisceralFat').value = r.visceral_fat ?? '';
-    document.getElementById('ibArmRight').value = r.arm_right ?? '';
-    document.getElementById('ibArmLeft').value = r.arm_left ?? '';
-    document.getElementById('ibTorso').value = r.torso ?? '';
-    document.getElementById('ibLegRight').value = r.leg_right ?? '';
-    document.getElementById('ibLegLeft').value = r.leg_left ?? '';
     document.getElementById('ibNotes').value = r.notes ?? '';
     document.getElementById('inbodyModal').classList.add('active');
 }
@@ -392,14 +377,6 @@ async function saveInbody() {
         skeletal_muscle: document.getElementById('ibSkeletal').value || null,
         body_fat: document.getElementById('ibBodyFat').value || null,
         body_fat_pct: document.getElementById('ibBodyFatPct').value || null,
-        bmi: document.getElementById('ibBmi').value || null,
-        bmr: document.getElementById('ibBmr').value || null,
-        visceral_fat: document.getElementById('ibVisceralFat').value || null,
-        arm_right: document.getElementById('ibArmRight').value || null,
-        arm_left: document.getElementById('ibArmLeft').value || null,
-        torso: document.getElementById('ibTorso').value || null,
-        leg_right: document.getElementById('ibLegRight').value || null,
-        leg_left: document.getElementById('ibLegLeft').value || null,
         notes: document.getElementById('ibNotes').value || null,
     };
 

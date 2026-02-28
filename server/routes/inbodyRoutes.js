@@ -28,22 +28,19 @@ router.post('/member/:memberId', async (req, res) => {
         if (!member) return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
 
         const {
-            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct,
-            bmi, bmr, visceral_fat, arm_right, arm_left, torso, leg_right, leg_left, notes
+            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, notes
         } = req.body;
 
         if (!measured_at) return res.status(400).json({ success: false, message: '측정일은 필수입니다.' });
 
         const result = await db.run(`
       INSERT INTO inbody_records
-      (member_id, measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, bmi, bmr, visceral_fat, arm_right, arm_left, torso, leg_right, leg_left, notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      (member_id, measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, notes)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id
     `, [
             req.params.memberId, measured_at,
             weight || null, skeletal_muscle || null, body_fat || null, body_fat_pct || null,
-            bmi || null, bmr || null, visceral_fat || null,
-            arm_right || null, arm_left || null, torso || null, leg_right || null, leg_left || null,
             notes || null
         ]);
 
@@ -62,20 +59,15 @@ router.put('/:id', async (req, res) => {
         if (!existing) return res.status(404).json({ success: false, message: '기록을 찾을 수 없습니다.' });
 
         const {
-            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct,
-            bmi, bmr, visceral_fat, arm_right, arm_left, torso, leg_right, leg_left, notes
+            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, notes
         } = req.body;
 
         await db.run(`
       UPDATE inbody_records SET
-      measured_at = $1, weight = $2, skeletal_muscle = $3, body_fat = $4, body_fat_pct = $5,
-      bmi = $6, bmr = $7, visceral_fat = $8, arm_right = $9, arm_left = $10,
-      torso = $11, leg_right = $12, leg_left = $13, notes = $14
-      WHERE id = $15
+      measured_at = $1, weight = $2, skeletal_muscle = $3, body_fat = $4, body_fat_pct = $5, notes = $6
+      WHERE id = $7
     `, [
             measured_at, weight || null, skeletal_muscle || null, body_fat || null, body_fat_pct || null,
-            bmi || null, bmr || null, visceral_fat || null,
-            arm_right || null, arm_left || null, torso || null, leg_right || null, leg_left || null,
             notes || null, req.params.id
         ]);
 

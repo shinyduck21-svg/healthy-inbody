@@ -33,14 +33,14 @@ async function seed() {
             );
             const memberId = res.rows[0].id;
             const records = [
-                [memberId, '2026-01-15', 78.5, 34.2, 18.5, 23.5, 25.1, 1680, 7, '초기 측정'],
-                [memberId, '2026-02-28', 76.2, 35.8, 16.1, 21.1, 24.2, 1720, 6, '근력 증가 및 체지방 감소']
+                [memberId, '2026-01-15', 78.5, 34.2, 18.5, 23.5, '초기 측정'],
+                [memberId, '2026-02-28', 76.2, 35.8, 16.1, 21.1, '근력 증가 및 체지방 감소']
             ];
             for (const r of records) {
                 await client.query(`
           INSERT INTO inbody_records 
-          (member_id, measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, bmi, bmr, visceral_fat, notes)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          (member_id, measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, notes)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
         `, r);
             }
         }
