@@ -6,13 +6,17 @@
 
 const TOKEN_KEY = 'mongfit_token';
 const ADMIN_KEY = 'mongfit_admin';
+const ROLE_KEY = 'mongfit_role';
+const USER_ID_KEY = 'mongfit_user_id';
 
 /**
  * 토큰 저장
  */
-function saveToken(token, username) {
+function saveToken(token, email, role, userId) {
     localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(ADMIN_KEY, username);
+    localStorage.setItem(ADMIN_KEY, email); // 기존 키 재사용 (이메일 저장)
+    localStorage.setItem(ROLE_KEY, role);
+    localStorage.setItem(USER_ID_KEY, userId);
 }
 
 /**
@@ -35,6 +39,8 @@ function getAdminName() {
 function logout() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(ADMIN_KEY);
+    localStorage.removeItem(ROLE_KEY);
+    localStorage.removeItem(USER_ID_KEY);
     window.location.href = '/login';
 }
 

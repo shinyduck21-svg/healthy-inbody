@@ -4,6 +4,16 @@
  */
 
 if (!requireAuth()) throw new Error('Not authenticated');
+// 역할에 따른 UI 조정
+const role = localStorage.getItem('mongfit_role');
+if (role !== 'admin') {
+    const adminBadge = document.querySelector('.admin-badge');
+    if (adminBadge) adminBadge.innerHTML = `<div class="admin-dot" style="background:var(--success)"></div><span>회원</span>`;
+
+    // 편집/삭제 버튼 숨기기 (선택 사항: 본인은 편집 가능하게 두려면 유지)
+    // document.getElementById('editMemberBtn').style.display = 'none';
+    document.getElementById('deleteMemberBtn').style.display = 'none';
+}
 document.getElementById('adminName').textContent = getAdminName();
 
 // URL에서 회원 ID 파싱
@@ -24,6 +34,15 @@ async function init() {
 
 // ===== 회원 정보 로드 =====
 async function loadMember() {
+    // 권한 체크: 관리자가 아닌데 남의 정보를 보려 할 경우
+    const role = localStorage.getItem('mongfit_role');
+    const myId = localStorage.getItem('mongfit_user_id');
+    if (role !== 'admin' && myId != MEMBER_ID) {
+        alert('권한이 없습니다.');
+        window.location.href = `/member?id=${myId}`;
+        return;
+    }
+
     const res = await apiFetch(`/api/members/${MEMBER_ID}`);
     if (!res) return;
     const data = await res.json();

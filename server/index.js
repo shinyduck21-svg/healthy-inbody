@@ -7,6 +7,7 @@ const { initDB } = require('./db');
 const authRoutes = require('./routes/authRoutes');
 const memberRoutes = require('./routes/memberRoutes');
 const inbodyRoutes = require('./routes/inbodyRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,10 +20,14 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/inbody', inbodyRoutes);
+app.use('/api/user', userRoutes);
 
 app.get('*', (req, res) => {
     if (req.path === '/login') {
         return res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
+    }
+    if (req.path === '/signup') {
+        return res.sendFile(path.join(__dirname, '..', 'public', 'signup.html'));
     }
     if (req.path.startsWith('/member')) {
         return res.sendFile(path.join(__dirname, '..', 'public', 'member.html'));

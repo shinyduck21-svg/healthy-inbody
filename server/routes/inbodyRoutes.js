@@ -8,6 +8,11 @@ router.use(authenticate);
 // GET /api/inbody/member/:memberId
 router.get('/member/:memberId', async (req, res) => {
     try {
+        // 본인 데이터거나 관리자여야 함
+        if (req.user.role !== 'admin' && req.user.id != req.params.memberId) {
+            return res.status(403).json({ success: false, message: '권한이 없습니다.' });
+        }
+
         const member = await db.get('SELECT id FROM members WHERE id = $1', [req.params.memberId]);
         if (!member) return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
 
@@ -24,6 +29,11 @@ router.get('/member/:memberId', async (req, res) => {
 // POST /api/inbody/member/:memberId
 router.post('/member/:memberId', async (req, res) => {
     try {
+        // 본인 데이터거나 관리자여야 함
+        if (req.user.role !== 'admin' && req.user.id != req.params.memberId) {
+            return res.status(403).json({ success: false, message: '권한이 없습니다.' });
+        }
+
         const member = await db.get('SELECT id FROM members WHERE id = $1', [req.params.memberId]);
         if (!member) return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
 
@@ -55,8 +65,13 @@ router.post('/member/:memberId', async (req, res) => {
 // PUT /api/inbody/:id
 router.put('/:id', async (req, res) => {
     try {
-        const existing = await db.get('SELECT id FROM inbody_records WHERE id = $1', [req.params.id]);
+        const existing = await db.get('SELECT * FROM inbody_records WHERE id = $1', [req.params.id]);
         if (!existing) return res.status(404).json({ success: false, message: '기록을 찾을 수 없습니다.' });
+
+        // 본인 데이터거나 관리자여야 함
+        if (req.user.role !== 'admin' && req.user.id != existing.member_id) {
+            return res.status(403).json({ success: false, message: '권한이 없습니다.' });
+        }
 
         const {
             measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, notes
@@ -81,8 +96,13 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/inbody/:id
 router.delete('/:id', async (req, res) => {
     try {
-        const existing = await db.get('SELECT id FROM inbody_records WHERE id = $1', [req.params.id]);
+        const existing = await db.get('SELECT * FROM inbody_records WHERE id = $1', [req.params.id]);
         if (!existing) return res.status(404).json({ success: false, message: '기록을 찾을 수 없습니다.' });
+
+        // 본인 데이터거나 관리자여야 함
+        if (req.user.role !== 'admin' && req.user.id != existing.member_id) {
+            return res.status(403).json({ success: false, message: '권한이 없습니다.' });
+        }
 
         await db.run('DELETE FROM inbody_records WHERE id = $1', [req.params.id]);
         res.json({ success: true, message: '기록이 삭제되었습니다.' });

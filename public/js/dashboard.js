@@ -2,11 +2,19 @@
  * dashboard.js - 메인 대시보드 로직
  */
 
-// 인증 체크
-if (!requireAuth()) throw new Error('Not authenticated');
+// 일반 회원이 대시보드 접근 시 본인 상세 페이지로 리다이렉트
+if (localStorage.getItem('mongfit_role') !== 'admin') {
+    const userId = localStorage.getItem('mongfit_user_id');
+    if (userId) {
+        window.location.href = `/member?id=${userId}`;
+    } else {
+        logout();
+    }
+}
 
-// 관리자 이름 표시
-document.getElementById('adminName').textContent = getAdminName();
+// 관리자 이메일 및 역할 표시
+const adminEmail = getAdminName(); // auth.js에서 ADMIN_KEY(이메일)를 반환함
+document.getElementById('adminName').textContent = `${adminEmail} (관리자)`;
 
 let allMembers = [];
 let deletingMemberId = null;

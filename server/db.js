@@ -14,7 +14,7 @@ async function initDB() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS admins (
         id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
@@ -26,6 +26,8 @@ async function initDB() {
         age INTEGER,
         phone TEXT,
         memo TEXT,
+        email TEXT UNIQUE,
+        password_hash TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(name, phone)
       );
@@ -45,11 +47,11 @@ async function initDB() {
     `);
 
     // 기본 관리자 계정 생성
-    const existing = await client.query('SELECT id FROM admins WHERE username = $1', ['admin']);
+    const existing = await client.query('SELECT id FROM admins WHERE email = $1', ['admin@mongfit.com']);
     if (existing.rowCount === 0) {
       const hash = bcrypt.hashSync('admin123', 10);
-      await client.query('INSERT INTO admins (username, password_hash) VALUES ($1, $2)', ['admin', hash]);
-      console.log('✅ 기본 관리자 계정 생성: admin / admin123');
+      await client.query('INSERT INTO admins (email, password_hash) VALUES ($1, $2)', ['admin@mongfit.com', hash]);
+      console.log('✅ 기본 관리자 계정 생성: admin@mongfit.com / admin123');
     }
 
     console.log('✅ PostgreSQL(Supabase) DB 초기화 완료 (MongFit)');

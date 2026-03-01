@@ -1,13 +1,14 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'mongfit_secret_key_2024_very_long_string';
+const SECRET_KEY = process.env.JWT_SECRET || 'mongfit_secret_key_2024_very_long_string';
 const JWT_EXPIRES_IN = '8h';
 
 /**
- * JWT 토큰 생성
+ * 토큰 생성
+ * payload: { id, email, role }
  */
 function generateToken(payload) {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    return jwt.sign(payload, SECRET_KEY, { expiresIn: JWT_EXPIRES_IN });
 }
 
 /**
@@ -21,11 +22,17 @@ function authenticate(req, res, next) {
 
     const token = authHeader.split(' ')[1];
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.admin = decoded;
+        const decoded = jwt.verify(token, SECRET_KEY);
+        req.user = decoded; // { id, email, role }
+
+        // 하위 호환성 유지
+        if (decoded.role === 'admin') {
+            req.admin = decoded;
+        }
+
         next();
     } catch (err) {
-        return res.status(401).json({ success: false, message: '토큰이 만료되었거나 유효하지 않습니다.' });
+        return res.status(401).json({ success: false, message: '유효하지 않은 토큰입니다.' });
     }
 }
 

@@ -1,15 +1,20 @@
 # MongFit 인바디 관리 프로젝트 작업 현황
 
-## 진행 중인 작업 (In Progress)
-- [/] GitHub Push 및 Render 재배포 확인
-- [/] 대시보드 및 상세 페이지 UI/UX 프리미엄화
+- [x] 사용자 기반 개인화 시스템 전환 (1단계: 자체 가입) `[x]`
+  - [x] 이메일 기반 로그인 및 회원가입 연동 (HTML/JS) `[x]`
+  - [x] DB 초기화 오류 해결 (`admins`, `members` 테이블 마이그레이션) `[x]`
+  - [x] 회원가입 후 리다이렉트 및 프로필 조회 권한 오류 수정 `[x]`
+  - [x] 일반 회원용 본인 데이터 접근 권한 최종 검증 `[x]`
+- [ ] 소셜 로그인 연동 (2단계) `[ ]`
 
-## 완료된 작업 (Completed)
-- [x] 프로젝트 독립성 확인 및 환경 재설정 (`RULES.md` 앱 맞춤 정비)
-- [x] `public/js/utils.js` 생성 및 필수 함수 기초 정의
-- [x] 데이터베이스 시스템 1차 전환 (PostgreSQL -> SQLite)
-- [x] 외부 접속 요구에 따른 Supabase(PostgreSQL) 복구 및 연동 가이드 제공
-- [x] Supabase 연결 시 'Tenant not found' 오류 디버깅 및 `.env` 최적화
-- [x] Supabase Transaction Pooler 활성화 및 Render 환경 변수 최종 교정 `[x]`
-- [x] 데이터 필드 간소화 (기초대사량, BMI, 부위별 근육량 등 제거) `[x]`
-- [x] 샘플 데이터 시딩 (핵심 필드 중심) `[x]`
+## ✅ 완료된 작업 (Completed)
+- [x] 브랜드명 변경 (Healty → MongFit) 전체 반영 `[x]`
+- [x] 회원 정보 필드 변경 (생년월일 → 나이) 및 데이터 마이그레이션 `[x]`
+- [x] DB 중복 데이터 정리 및 Unique 제약 조건 추가 `[x]`
+- [x] Supabase Transaction Pooler 연동 및 Render 배포 설정 최적화 `[x]`
+- [x] `members` 테이블 확장 (email, password_hash 추가) `[x]`
+- [x] 회원가입 API 및 역할 기반(관리자/회원) 로그인 백엔드 구현 `[x]`
+
+## 📝 향후 계획
+- [ ] 비밀번호 찾기 (이메일 발송) 기능 검토
+- [ ] 인바디 기록 시각화(차트) 프리미엄 디자인 고도화

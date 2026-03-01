@@ -5,9 +5,12 @@ const { authenticate } = require('../auth');
 
 router.use(authenticate);
 
-// GET /api/members
+// GET /api/members - 관리자용 전체 목록 조회
 router.get('/', async (req, res) => {
     try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: '권한이 없습니다.' });
+        }
         const { search } = req.query;
         let members;
         if (search) {
@@ -36,6 +39,11 @@ router.get('/', async (req, res) => {
 // GET /api/members/:id
 router.get('/:id', async (req, res) => {
     try {
+        // 본인 정보거나 관리자여야 함
+        if (req.user.role !== 'admin' && req.user.id != req.params.id) {
+            return res.status(403).json({ success: false, message: '권한이 없습니다.' });
+        }
+
         const member = await db.get('SELECT * FROM members WHERE id = $1', [req.params.id]);
         if (!member) return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
         res.json({ success: true, data: member });
@@ -68,6 +76,11 @@ router.put('/:id', async (req, res) => {
         const { name, gender, age, phone, memo } = req.body;
         const existing = await db.get('SELECT id FROM members WHERE id = $1', [req.params.id]);
         if (!existing) return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
+
+        // 본인 정보거나 관리자여야 함
+        if (req.user.role !== 'admin' && req.user.id != req.params.id) {
+            return res.status(403).json({ success: false, message: '권한이 없습니다.' });
+        }
 
         await db.run(
             'UPDATE members SET name = $1, gender = $2, age = $3, phone = $4, memo = $5 WHERE id = $6',
