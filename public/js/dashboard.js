@@ -628,4 +628,25 @@ function renderRevReport(logs) {
     `).join('') || '<div class="text-muted p-2">기록이 없습니다.</div>';
 }
 
+// 가이드 모달 관련
+function openRevGuideModal() {
+    document.getElementById('revGuideModal').classList.add('active');
+}
+
+function closeRevGuideModal() {
+    document.getElementById('revGuideModal').classList.remove('active');
+}
+
+function switchRevGuideTab(el, tab) {
+    const tabs = document.querySelectorAll('.rev-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    const contents = document.querySelectorAll('.rev-tab-content');
+    contents.forEach(c => c.classList.remove('active'));
+
+    if (tab === 'food') document.getElementById('guideTabFood').classList.add('active');
+    else document.getElementById('guideTabWorkout').classList.add('active');
+}
+
 init();

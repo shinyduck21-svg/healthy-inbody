@@ -43,6 +43,7 @@
                         </div>
                     </div>
                     <div class="flex gap-1">
+                        <button class="btn btn-secondary btn-sm" onclick="openRevGuideModal()">📖 가이드</button>
                         <button class="btn btn-secondary btn-sm" onclick="openRevReportModal()">📊 리포트</button>
                         <button class="btn btn-primary btn-sm" onclick="openRevMissionModal()">📝 오늘 미션 체크</button>
                     </div>
@@ -516,6 +517,82 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeRevReportModal()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 내 몸 혁명 가이드 모달 (식단/운동) -->
+    <div class="modal-overlay" id="revGuideModal">
+        <div class="modal" style="max-width:550px;">
+            <div class="modal-header">
+                <h2 class="modal-title">내 몸 혁명 가이드북</h2>
+                <button class="close-btn" onclick="closeRevGuideModal()">✕</button>
+            </div>
+            <div class="modal-body" style="padding:0;">
+                <div class="rev-tabs">
+                    <button class="rev-tab active" onclick="switchRevGuideTab(this, 'food')">🥗 식단 가이드</button>
+                    <button class="rev-tab" onclick="switchRevGuideTab(this, 'workout')">🏃 운동 가이드</button>
+                </div>
+
+                <div id="guideTabFood" class="rev-tab-content active">
+                    <div style="padding:1.2rem;">
+                        <h3 class="mb-2" style="font-size:1rem; color:var(--primary);">✅ 마음껏 드셔도 좋습니다 (허용 식품)</h3>
+                        <div class="guide-grid mb-3">
+                            <div class="guide-item">🟢 모든 잎채소 (상추, 깻잎 등)</div>
+                            <div class="guide-item">🟢 두부, 삶은 달걀</div>
+                            <div class="guide-item">🟢 무가당 플레인 요거트</div>
+                            <div class="guide-item">🟢 해조류 (미역, 다시마)</div>
+                            <div class="guide-item">🟢 생선, 해산물</div>
+                            <div class="guide-item">🟢 닭가슴살 (삶거나 구운 것)</div>
+                        </div>
+
+                        <h3 class="mb-2" style="font-size:1rem; color:var(--error);">❌ 절대 피해야 합니다 (제한 식품)</h3>
+                        <div class="guide-grid">
+                            <div class="guide-item red">🔴 설탕, 액상과당 (음료수)</div>
+                            <div class="guide-item red">🔴 밀가루 음식 (빵, 면)</div>
+                            <div class="guide-item red">🔴 술 (알코올)</div>
+                            <div class="guide-item red">🔴 믹스커피, 단 커피</div>
+                            <div class="guide-item red">🔴 트랜스 지방 (튀김)</div>
+                            <div class="guide-item red">🔴 짠 국물 요리</div>
+                        </div>
+
+                        <div class="alert alert-info mt-3" style="font-size:0.85rem;">
+                            💡 <strong>Tip:</strong> 1주차(Day 1-3)는 단백질 셰이크만 4번! 커피는 블랙으로 하루 한 잔까지만 허용됩니다.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="guideTabWorkout" class="rev-tab-content">
+                    <div style="padding:1.2rem;">
+                        <h3 class="mb-2" style="font-size:1rem; color:var(--primary);">🔥 4분 HIIT (고강도 인터벌 운동)</h3>
+                        <p class="text-muted mb-3" style="font-size:0.85rem;">신진대사를 깨우는 가장 강력한 방법입니다. '숨이 턱에 찰 정도'의 강도로
+                            수행하세요.</p>
+
+                        <div
+                            style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px; margin-bottom:1rem;">
+                            <div class="flex-between mb-1">
+                                <span style="font-weight:700;">강력한 운동 (20초)</span>
+                                <span class="badge badge-error">MAX POWER</span>
+                            </div>
+                            <div class="flex-between mb-2">
+                                <span style="font-weight:700;">불완전 휴식 (10초)</span>
+                                <span class="badge badge-secondary">REST</span>
+                            </div>
+                            <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">총 8라운드 반복 (약 4분)
+                            </div>
+                        </div>
+
+                        <h4 class="mb-2" style="font-size:0.9rem;">추천 HIIT 동작</h4>
+                        <div class="guide-list">
+                            <li>🏃 <strong>제자리 전력 질주</strong>: 무릎을 높이 들고 최대한 빠르게!</li>
+                            <li>🤸 <strong>버피 테스트</strong>: 전신을 사용하는 최고의 유산소근력 운동.</li>
+                            <li>🦵 <strong>스쿼트 점프</strong>: 하체 근육을 강하게 자극하여 대사량 증가.</li>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRevGuideModal()">알겠습니다</button>
             </div>
         </div>
     </div>
