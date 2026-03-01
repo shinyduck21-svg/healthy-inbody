@@ -26,6 +26,11 @@
                         <label class="form-label" for="password">비밀번호 *</label>
                         <input class="form-input" type="password" id="password" placeholder="비밀번호" required />
                     </div>
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">비밀번호 확인 *</label>
+                        <input class="form-input" type="password" id="confirmPassword" placeholder="비밀번호 재입력"
+                            required />
+                    </div>
                 </div>
 
                 <div class="form-grid mb-2">
@@ -78,10 +83,20 @@
             e.preventDefault();
             const btn = document.getElementById('signupBtn');
             const errorEl = document.getElementById('signupError');
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            errorEl.style.display = 'none';
+
+            if (password !== confirmPassword) {
+                errorEl.textContent = '비밀번호가 일치하지 않습니다.';
+                errorEl.style.display = 'block';
+                return;
+            }
 
             const body = {
                 email: document.getElementById('email').value.trim(),
-                password: document.getElementById('password').value,
+                password: password,
                 name: document.getElementById('name').value.trim(),
                 gender: document.getElementById('gender').value || null,
                 age: document.getElementById('age').value || null,
