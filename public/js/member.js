@@ -386,9 +386,19 @@ function openEditInbody(id) {
 
 // ===== 인바디 저장 =====
 async function saveInbody() {
-    const id = document.getElementById('editInbodyId').value;
+    let id = document.getElementById('editInbodyId').value;
     const measured_at = document.getElementById('ibMeasuredAt').value;
     if (!measured_at) { showToast('측정일을 입력해 주세요.', 'error'); return; }
+
+    // 신규 추가 시 중복 날짜 체크
+    if (!id) {
+        const existingRecord = inbodyRecords.find(r => r.measured_at.substring(0, 10) === measured_at);
+        if (existingRecord) {
+            const confirmUpdate = confirm(`${measured_at} 날짜에 이미 기록이 존재합니다.\n기존 기록을 수정하시겠습니까?`);
+            if (!confirmUpdate) return;
+            id = existingRecord.id; // 기존 ID를 사용하여 업데이트 모드로 전환
+        }
+    }
 
     const body = {
         measured_at,
