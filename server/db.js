@@ -61,6 +61,29 @@ async function initDB() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(member_id, measured_at)
       );
+
+      -- 내 몸 혁명 로그 테이블
+      CREATE TABLE IF NOT EXISTS revolution_logs (
+        id SERIAL PRIMARY KEY,
+        member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+        date TEXT NOT NULL,
+        shake_count INTEGER DEFAULT 0,
+        hiit_done BOOLEAN DEFAULT FALSE,
+        no_sugar BOOLEAN DEFAULT TRUE,
+        no_alcohol BOOLEAN DEFAULT TRUE,
+        fasting_hours INTEGER DEFAULT 0,
+        weight REAL,
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(member_id, date)
+      );
+
+      -- members 테이블 스카마 보정 (revolution_start_date 추가)
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='revolution_start_date') THEN
+          ALTER TABLE members ADD COLUMN revolution_start_date TEXT;
+        END IF;
+      END $$;
     `);
 
     // 기본 관리자 계정 생성

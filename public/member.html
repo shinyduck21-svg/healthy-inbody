@@ -31,6 +31,47 @@
     </nav>
 
     <main class="container">
+        <!-- 내 몸 혁명 프로그램 대시보드 -->
+        <div id="revolutionDashboard" style="display:none;" class="mb-3">
+            <div class="card revolution-card">
+                <div class="flex-between mb-2">
+                    <div class="flex gap-2" style="align-items:center;">
+                        <div class="revolution-badge">DAY <span id="revDayCount">1</span></div>
+                        <div>
+                            <h2 class="revolution-title" id="revPhaseTitle">1단계: 체내 지방 차단 (비움)</h2>
+                            <p class="revolution-subtitle" id="revPhaseDesc">정제 탄수화물을 끊고 몸을 가볍게 만듭니다.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-1">
+                        <button class="btn btn-secondary btn-sm" onclick="openRevReportModal()">📊 리포트</button>
+                        <button class="btn btn-primary btn-sm" onclick="openRevMissionModal()">📝 오늘 미션 체크</button>
+                    </div>
+                </div>
+                <!-- 프로그레스 바 -->
+                <div class="rev-progress-container">
+                    <div class="rev-progress-bar" id="revProgressBar" style="width: 3.5%;"></div>
+                </div>
+                <div class="flex-between mt-1">
+                    <span class="rev-stat text-muted">시작일: <span id="revStartDate">-</span></span>
+                    <span class="rev-stat text-muted">진행률: <span id="revProgressPercent">3.5</span>%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 프로그램 시작 권유 배너 -->
+        <div id="startRevolutionBanner" style="display:none;" class="mb-3">
+            <div class="card" style="background:var(--gradient-primary); border:none; color:white; padding:1.5rem;">
+                <div class="flex-between">
+                    <div>
+                        <h2 style="font-weight:800; margin-bottom:0.25rem;">🚀 내 몸 혁명 4주 프로그램</h2>
+                        <p style="opacity:0.9; font-size:0.95rem;">박용우 교수님의 4주 신진대사 리셋 프로젝트에 참여해 보세요.</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="startRevolutionProgram()"
+                        style="background:white; color:var(--primary); border:none;">지금 시작하기</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 뒤로가기 -->
         <div class="page-header">
             <a href="/" class="back-link">← 회원 목록으로</a>
@@ -77,11 +118,21 @@
             </div>
         </div>
 
-        <!-- 최신 인바디 요약 -->
-        <div class="card mb-3" id="latestInbodyCard" style="display:none;">
-            <div class="section-title">최근 측정 결과</div>
-            <div id="latestSummary"
-                style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:1rem;"></div>
+        <!-- 대시보드 요약 및 방사형 밸런스 차트 -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:1rem;" class="mb-3">
+            <!-- 최신 인바디 요약 -->
+            <div class="card" id="latestInbodyCard" style="display:none; height:100%;">
+                <div class="section-title">최근 측정 결과</div>
+                <div id="latestSummary" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:1rem;"></div>
+            </div>
+
+            <!-- 체성분 밸런스(Radar) 차트 -->
+            <div class="card" id="radarChartCard" style="display:none; height:100%;">
+                <div class="section-title">체성분 밸런스</div>
+                <div style="height:220px; position:relative;">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
         </div>
 
         <!-- 체중 그래프 -->
@@ -331,6 +382,140 @@
             <div class="modal-footer">
                 <button class="btn btn-primary" id="changePasswordBtn" onclick="changePassword()"
                     style="width:100%;">비밀번호 변경</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 내 몸 혁명 오늘 미션 모달 -->
+    <div class="modal-overlay" id="revMissionModal">
+        <div class="modal" style="max-width:450px;">
+            <div class="modal-header">
+                <h2 class="modal-title">오늘의 혁명 미션</h2>
+                <button class="close-btn" onclick="closeRevMissionModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-2" id="revMissionDate">2026-03-01 (Day 1)</p>
+
+                <div class="mission-item">
+                    <div class="flex-between">
+                        <div>
+                            <span>🥛 단백질 셰이크 (목표: <span id="targetShake">4</span>회)</span>
+                            <div class="text-muted" style="font-size:0.75rem; margin-top:0.2rem;">
+                                하루 권장 단백질: <span id="targetProtein">0</span>g
+                            </div>
+                        </div>
+                        <div class="flex gap-1" style="align-items:center;">
+                            <button class="btn btn-secondary btn-sm" onclick="adjustShake(-1)">-</button>
+                            <span id="currentShake"
+                                style="font-weight:bold; min-width:20px; text-align:center;">0</span>
+                            <button class="btn btn-secondary btn-sm" onclick="adjustShake(1)">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mission-item">
+                    <div class="flex-between">
+                        <span>⏳ 간헐적 단식 시간 (권장: <span id="targetFasting">14</span>시간+)</span>
+                        <div class="flex gap-1" style="align-items:center;">
+                            <input type="number" id="missFasting" class="form-input" style="width:70px; padding:0.3rem;"
+                                placeholder="0">
+                            <span class="text-muted">시간</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mission-item">
+                    <label class="flex gap-2" style="align-items:center; cursor:pointer;">
+                        <input type="checkbox" id="missHiit" class="form-checkbox">
+                        <span>🏃 고강도 인터벌 운동 (HIIT) 완료</span>
+                    </label>
+                </div>
+
+                <div class="mission-item">
+                    <label class="flex gap-2" style="align-items:center; cursor:pointer;">
+                        <input type="checkbox" id="missNoSugar" class="form-checkbox" checked>
+                        <span>🍭 설탕/액상과당 차단 성공</span>
+                    </label>
+                </div>
+
+                <div class="mission-item">
+                    <label class="flex gap-2" style="align-items:center; cursor:pointer;">
+                        <input type="checkbox" id="missNoAlcohol" class="form-checkbox" checked>
+                        <span>🍺 금주 성공</span>
+                    </label>
+                </div>
+
+                <div class="form-group mt-2">
+                    <label class="form-label">오늘의 컨디션 / 메모</label>
+                    <textarea class="form-textarea" id="revNotes" placeholder="오늘 느낀 몸의 변화나 메모를 남겨보세요."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRevMissionModal()">닫기</button>
+                <button class="btn btn-primary" id="saveRevLogBtn" onclick="saveRevLog()">오늘 기록 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 내 몸 혁명 성공 리포트 모달 -->
+    <div class="modal-overlay" id="revReportModal">
+        <div class="modal" style="max-width:500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">혁명 성취 리포트</h2>
+                <button class="close-btn" onclick="closeRevReportModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="card mb-2" style="background:var(--bg-card); border:1px solid var(--glass-border);">
+                    <div style="text-align:center; padding:1.5rem;">
+                        <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">총 달성률</div>
+                        <div style="font-size:2.5rem; font-weight:800; color:var(--primary); line-height:1;">
+                            <span id="repAchievement">0</span>%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2 mb-2">
+                    <div class="stat-card" style="padding:1rem; text-align:center;">
+                        <div style="font-size:0.75rem; color:var(--text-muted);">미션 수행일</div>
+                        <div style="font-size:1.2rem; font-weight:700;" id="repTotalDays">0일</div>
+                    </div>
+                    <div class="stat-card" style="padding:1rem; text-align:center;">
+                        <div style="font-size:0.75rem; color:var(--text-muted);">HIIT 완료</div>
+                        <div style="font-size:1.2rem; font-weight:700;" id="repHiitCount">0회</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1rem;">
+                    <div class="flex-between mb-1">
+                        <span style="font-size:0.85rem;">🥛 셰이크 준수율</span>
+                        <span style="font-size:0.85rem; font-weight:700;" id="repShakePct">0%</span>
+                    </div>
+                    <div class="rev-progress-container" style="margin-top:0;">
+                        <div class="rev-progress-bar" id="repBarShake" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1rem;">
+                    <div class="flex-between mb-1">
+                        <span style="font-size:0.85rem;">⏳ 단식 목표 달성률</span>
+                        <span style="font-size:0.85rem; font-weight:700;" id="repFastingPct">0%</span>
+                    </div>
+                    <div class="rev-progress-container" style="margin-top:0;">
+                        <div class="rev-progress-bar" id="repBarFasting"
+                            style="width: 0%; background:var(--gradient-success);"></div>
+                    </div>
+                </div>
+
+                <!-- 최근 기록 리스트 -->
+                <div style="border-top:1px solid var(--glass-border); padding-top:1rem;">
+                    <h3 style="font-size:0.9rem; margin-bottom:0.75rem;">최근 혁명 기록 (7일)</h3>
+                    <div id="repLogList" style="max-height:200px; overflow-y:auto; font-size:0.85rem;">
+                        <!-- JS에서 렌더링 -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeRevReportModal()">닫기</button>
             </div>
         </div>
     </div>
