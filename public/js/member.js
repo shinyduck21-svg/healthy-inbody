@@ -7,14 +7,14 @@ if (!requireAuth()) throw new Error('Not authenticated');
 // 역할에 따른 UI 조정
 const role = localStorage.getItem('mongfit_role');
 if (role !== 'admin') {
-    const adminBadge = document.querySelector('.admin-badge');
-    if (adminBadge) adminBadge.innerHTML = `<div class="admin-dot" style="background:var(--success)"></div><span>회원</span>`;
-
-    // 편집/삭제 버튼 숨기기 (선택 사항: 본인은 편집 가능하게 두려면 유지)
-    // document.getElementById('editMemberBtn').style.display = 'none';
-    document.getElementById('deleteMemberBtn').style.display = 'none';
+    const adminDot = document.querySelector('.admin-dot');
+    const adminNameSpan = document.getElementById('adminName');
+    if (adminDot) adminDot.style.background = 'var(--success)';
+    if (adminNameSpan) adminNameSpan.textContent = '회원';
+} else {
+    const adminNameSpan = document.getElementById('adminName');
+    if (adminNameSpan) adminNameSpan.textContent = getAdminName();
 }
-document.getElementById('adminName').textContent = getAdminName();
 
 // URL에서 회원 ID 파싱
 const urlParams = new URLSearchParams(window.location.search);
