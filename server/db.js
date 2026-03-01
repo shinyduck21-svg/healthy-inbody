@@ -19,6 +19,13 @@ async function initDB() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
 
+      -- admins 테이블 스키마 보정 (기존 테이블 대응)
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='admins' AND column_name='email') THEN
+          ALTER TABLE admins ADD COLUMN email TEXT UNIQUE;
+        END IF;
+      END $$;
+
       CREATE TABLE IF NOT EXISTS members (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -31,6 +38,16 @@ async function initDB() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(name, phone)
       );
+
+      -- members 테이블 스키마 보정 (기존 테이블 대응)
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='email') THEN
+          ALTER TABLE members ADD COLUMN email TEXT UNIQUE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='password_hash') THEN
+          ALTER TABLE members ADD COLUMN password_hash TEXT;
+        END IF;
+      END $$;
 
       CREATE TABLE IF NOT EXISTS inbody_records (
         id SERIAL PRIMARY KEY,
