@@ -17,11 +17,13 @@ const adminEmail = getAdminName(); // auth.js에서 ADMIN_KEY(이메일)를 반�
 document.getElementById('adminName').textContent = `${adminEmail} (관리자)`;
 
 let allMembers = [];
+let currentGenderFilter = 'all'; // 'all', 'M', 'F'
 let deletingMemberId = null;
 
 // ===== 초기 로드 =====
 async function init() {
     await loadMembers();
+    setupFilters();
 }
 
 // ===== 회원 목록 불러오기 =====
@@ -35,14 +37,48 @@ async function loadMembers(search = '') {
 
     allMembers = data.data;
     renderStats(allMembers);
-    renderMembers(allMembers);
+    filterAndRender();
+}
+
+// ===== 필터링 및 렌더링 =====
+function filterAndRender() {
+    let filtered = allMembers;
+    if (currentGenderFilter !== 'all') {
+        filtered = allMembers.filter(m => m.gender === currentGenderFilter);
+    }
+    renderMembers(filtered);
+    updateFilterUI();
+}
+
+// ===== 필터 UI 업데이트 =====
+function updateFilterUI() {
+    document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active'));
+    if (currentGenderFilter === 'all') document.getElementById('statCardTotal').classList.add('active');
+    else if (currentGenderFilter === 'M') document.getElementById('statCardMale').classList.add('active');
+    else if (currentGenderFilter === 'F') document.getElementById('statCardFemale').classList.add('active');
+}
+
+// ===== 필터 이벤트 설정 =====
+function setupFilters() {
+    document.getElementById('statCardTotal').addEventListener('click', () => {
+        currentGenderFilter = 'all';
+        filterAndRender();
+    });
+    document.getElementById('statCardMale').addEventListener('click', () => {
+        currentGenderFilter = 'M';
+        filterAndRender();
+    });
+    document.getElementById('statCardFemale').addEventListener('click', () => {
+        currentGenderFilter = 'F';
+        filterAndRender();
+    });
 }
 
 // ===== 통계 렌더링 =====
 function renderStats(members) {
     const male = members.filter(m => m.gender === 'M').length;
     const female = members.filter(m => m.gender === 'F').length;
-    const totalRecords = members.reduce((sum, m) => sum + (m.record_count || 0), 0);
+    const totalRecords = members.reduce((sum, m) => sum + Number(m.record_count || 0), 0);
 
     document.getElementById('statTotal').textContent = members.length;
     document.getElementById('statMale').textContent = male;

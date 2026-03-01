@@ -612,7 +612,13 @@ h3 {
 
 .stat-card:hover {
   transform: translateY(-2px);
-  border-color: var(--glass-border);
+  border-color: var(--primary);
+}
+
+.stat-card.active {
+  border-color: var(--primary);
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow);
 }
 
 .stat-icon {
