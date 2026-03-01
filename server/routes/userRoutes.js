@@ -42,9 +42,15 @@ router.post('/signup', async (req, res) => {
 // GET /api/user/me - 내 정보 조회
 router.get('/me', authenticate, async (req, res) => {
     try {
-        // authenticate 미들웨어가 JWT 페이로드를 req.user에 담습니다.
         const userId = req.user.id;
-        const user = await db.get('SELECT id, email, name, gender, age, phone, memo, created_at FROM members WHERE id = $1', [userId]);
+        const role = req.user.role;
+        let user;
+
+        if (role === 'admin') {
+            user = await db.get('SELECT id, email, "name" FROM admins WHERE id = $1', [userId]);
+        } else {
+            user = await db.get('SELECT id, email, name, gender, age, phone, memo, created_at FROM members WHERE id = $1', [userId]);
+        }
 
         if (!user) {
             return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
@@ -53,6 +59,31 @@ router.get('/me', authenticate, async (req, res) => {
         res.json({ success: true, data: user });
     } catch (err) {
         res.status(500).json({ success: false, message: '서버 오류' });
+    }
+});
+
+// PUT /api/user/me - 내 정보 수정
+router.put('/me', authenticate, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const role = req.user.role;
+        const { name, gender, age, phone } = req.body;
+
+        if (!name) return res.status(400).json({ success: false, message: '이름은 필수입니다.' });
+
+        if (role === 'admin') {
+            await db.run('UPDATE admins SET name = $1 WHERE id = $2', [name, userId]);
+        } else {
+            await db.run(
+                'UPDATE members SET name = $1, gender = $2, age = $3, phone = $4 WHERE id = $5',
+                [name, gender || null, age || null, phone || null, userId]
+            );
+        }
+
+        res.json({ success: true, message: '정보가 수정되었습니다.' });
+    } catch (err) {
+        console.error('내 정보 수정 오류:', err);
+        res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' });
     }
 });
 

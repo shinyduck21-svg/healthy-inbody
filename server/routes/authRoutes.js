@@ -41,13 +41,17 @@ router.post('/login', async (req, res) => {
 router.post('/change-password', require('../auth').authenticate, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
-        const admin = await db.get('SELECT * FROM admins WHERE id = $1', [req.admin.id]);
+        const { id, role } = req.user;
+        const table = role === 'admin' ? 'admins' : 'members';
 
-        if (!bcrypt.compareSync(currentPassword, admin.password_hash))
+        const user = await db.get(`SELECT * FROM ${table} WHERE id = $1`, [id]);
+        if (!user) return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
+
+        if (!bcrypt.compareSync(currentPassword, user.password_hash))
             return res.status(400).json({ success: false, message: '현재 비밀번호가 올바르지 않습니다.' });
 
         const newHash = bcrypt.hashSync(newPassword, 10);
-        await db.run('UPDATE admins SET password_hash = $1 WHERE id = $2', [newHash, req.admin.id]);
+        await db.run(`UPDATE ${table} SET password_hash = $1 WHERE id = $2`, [newHash, id]);
         res.json({ success: true, message: '비밀번호가 변경되었습니다.' });
     } catch (err) {
         res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' });

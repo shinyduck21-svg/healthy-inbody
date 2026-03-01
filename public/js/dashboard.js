@@ -261,4 +261,132 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     });
 });
 
+// ===== 내 정보 (마이페이지) 로직 =====
+document.getElementById('myProfileBtn').addEventListener('click', openMyProfileModal);
+
+async function openMyProfileModal() {
+    const res = await apiFetch('/api/user/me');
+    if (!res) return;
+    const data = await res.json();
+    if (!data.success) return;
+
+    const user = data.data;
+    const role = localStorage.getItem('mongfit_role');
+
+    document.getElementById('myEmail').value = user.email;
+    document.getElementById('myName').value = user.name;
+
+    // 관리자면 성별/나이/연락처 필드 숨김
+    const memberFields = document.querySelectorAll('.member-only-field');
+    if (role === 'admin') {
+        memberFields.forEach(f => f.style.display = 'none');
+    } else {
+        memberFields.forEach(f => f.style.display = 'block');
+        document.getElementById('myGender').value = user.gender || '';
+        document.getElementById('myAge').value = user.age || '';
+        document.getElementById('myPhone').value = user.phone || '';
+    }
+
+    document.getElementById('myProfileModal').classList.add('active');
+}
+
+function closeMyProfileModal() {
+    document.getElementById('myProfileModal').classList.remove('active');
+}
+
+async function saveMyProfile() {
+    const role = localStorage.getItem('mongfit_role');
+    const id = localStorage.getItem('mongfit_user_id');
+    const name = document.getElementById('myName').value.trim();
+    if (!name) { showToast('이름을 입력해 주세요.', 'error'); return; }
+
+    const body = { name };
+    if (role !== 'admin') {
+        body.gender = document.getElementById('myGender').value || null;
+        body.age = document.getElementById('myAge').value || null;
+        body.phone = document.getElementById('myPhone').value.trim() || null;
+    }
+
+    const saveBtn = document.getElementById('saveMyProfileBtn');
+    saveBtn.innerHTML = '<span class="spinner"></span>';
+    saveBtn.disabled = true;
+
+    try {
+        const res = await apiFetch('/api/user/me', { method: 'PUT', body: JSON.stringify(body) });
+        if (!res) return;
+        const data = await res.json();
+
+        if (data.success) {
+            showToast('내 정보가 수정되었습니다.', 'success');
+            closeMyProfileModal();
+            // 관리자 이름 표시 업데이트
+            if (role === 'admin') {
+                document.getElementById('adminName').textContent = `${user.email} (관리자)`;
+            }
+            location.reload(); // 간단하게 페이지 갱신
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        showToast('저장 중 오류가 발생했습니다.', 'error');
+    } finally {
+        saveBtn.innerHTML = '저장';
+        saveBtn.disabled = false;
+    }
+}
+
+// ===== 비밀번호 변경 로직 =====
+function openChangePasswordModal() {
+    // 기존 입력 초기화
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmNewPassword').value = '';
+    document.getElementById('changePasswordModal').classList.add('active');
+}
+
+function closeChangePasswordModal() {
+    document.getElementById('changePasswordModal').classList.remove('active');
+}
+
+async function changePassword() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+    if (!currentPassword || !newPassword) {
+        showToast('비밀번호를 입력해 주세요.', 'error');
+        return;
+    }
+    if (newPassword !== confirmNewPassword) {
+        showToast('새 비밀번호가 일치하지 않습니다.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('changePasswordBtn');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+
+    try {
+        const res = await apiFetch('/api/auth/change-password', {
+            method: 'POST',
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+        if (!res) return;
+        const data = await res.json();
+
+        if (data.success) {
+            showToast('비밀번호가 성공적으로 변경되었습니다.', 'success');
+            closeChangePasswordModal();
+            closeMyProfileModal();
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        showToast('비밀번호 변경 중 오류가 발생했습니다.', 'error');
+    } finally {
+        btn.innerHTML = '비밀번호 변경';
+        btn.disabled = false;
+    }
+}
+
 init();
