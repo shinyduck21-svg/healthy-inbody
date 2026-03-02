@@ -30,6 +30,7 @@ let deletingRecordId = null;
 let revolutionStatus = null;
 let revolutionLogs = [];
 let allGroups = [];
+let currentCalDate = new Date(); // 달력용 현재 날짜 추가
 
 // ===== 초기화 =====
 async function init() {
