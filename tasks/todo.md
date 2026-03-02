@@ -13,7 +13,11 @@
   - [x] Supabase 스키마(revolution_start_date) 반영 확인 (완료)
 - [/] **달력 표시 오류 수정 및 최종 배포** `[/]`
   - [x] member.js currentCalDate 변수 추가 (완료)
-  - [ ] Git 커밋 및 Push (진행 중)
+- [x] **내 몸 혁명 미션 항목 변경 (수분/수면/확언)** `[x]`
+  - [x] HTML(index, member) 레이블 및 이모지 수정 (완료)
+  - [x] JS(index, member) 리포트 이모지 수정 (완료)
+- [/] **최종 Git 배포 및 정리** `[/]`
+  - [ ] Git Commit & Push (진행 중)
 
 
 

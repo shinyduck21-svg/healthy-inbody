@@ -666,7 +666,7 @@ function renderRevReport(logs) {
                 <span style="margin-left:0.5rem; color:var(--text-muted);">🥛${log.shake_count || 0} ⏳${log.fasting_hours || 0}h</span>
             </div>
             <div>
-                ${log.hiit_done ? '🏃' : ''} ${log.no_sugar !== false ? '🍭' : ''} ${log.no_alcohol !== false ? '🍺' : ''}
+                ${log.hiit_done ? '🏃' : ''} ${log.no_sugar !== false ? '💧' : ''} ${log.no_alcohol !== false ? '🌙' : ''}
             </div>
         </div>
     `).join('') || '<div class="text-muted p-2">기록이 없습니다.</div>';
