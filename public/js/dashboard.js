@@ -17,13 +17,18 @@ const adminEmail = getAdminName(); // auth.js에서 ADMIN_KEY(이메일)를 반�
 document.getElementById('adminName').textContent = `${adminEmail} (관리자)`;
 
 let allMembers = [];
+let allGroups = [];
 let currentGenderFilter = 'all'; // 'all', 'M', 'F'
+let currentGroupFilter = ''; // Group ID
 let deletingMemberId = null;
 let revolutionStatus = null;
 const MY_ID = localStorage.getItem('mongfit_user_id');
+let revolutionLogs = [];
+let currentCalDate = new Date();
 
 // ===== 초기 로드 =====
 async function init() {
+    await loadGroups();
     await loadMembers();
     setupFilters();
     if (MY_ID) await loadRevolutionStatus();
@@ -31,7 +36,11 @@ async function init() {
 
 // ===== 회원 목록 불러오기 =====
 async function loadMembers(search = '') {
-    const url = search ? `/api/members?search=${encodeURIComponent(search)}` : '/api/members';
+    const groupId = document.getElementById('groupFilter').value;
+    let url = `/api/members?`;
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (groupId) url += `group_id=${groupId}&`;
+
     const res = await apiFetch(url);
     if (!res) return;
 
@@ -107,6 +116,7 @@ function renderMembers(members) {
         const genderLabel = m.gender === 'M' ? '남' : m.gender === 'F' ? '여' : '-';
         const age = m.age ? m.age + '세' : '-';
         const lastMeasured = m.last_measured ? formatDate(m.last_measured) : '기록 없음';
+        const groupTag = m.group_name ? `<span class="badge badge-primary" style="margin-left: 5px; font-size: 0.7rem;">${m.group_name}</span>` : '';
 
         return `
       <div class="member-card" onclick="goToMember(${m.id})">
@@ -114,7 +124,7 @@ function renderMembers(members) {
           <div class="flex gap-1" style="align-items:center;">
             <div class="member-avatar ${avatarClass}">${initial}</div>
             <div>
-              <div class="member-name">${m.name}</div>
+              <div class="member-name">${m.name}${groupTag}</div>
               <div class="member-info">${genderLabel} · ${age} · ${m.phone || '연락처 없음'}</div>
             </div>
           </div>
@@ -145,10 +155,14 @@ function goToMember(id) {
 
 // ===== 검색 =====
 let searchTimer;
-document.getElementById('searchInput').addEventListener('input', (e) => {
+function debounceSearch() {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => loadMembers(e.target.value.trim()), 300);
-});
+    searchTimer = setTimeout(() => {
+        const searchInput = document.getElementById('memberSearch');
+        const search = searchInput ? searchInput.value.trim() : '';
+        loadMembers(search);
+    }, 300);
+}
 
 // ===== 회원 추가 모달 =====
 document.getElementById('addMemberBtn').addEventListener('click', () => {
@@ -159,6 +173,7 @@ document.getElementById('addMemberBtn').addEventListener('click', () => {
     document.getElementById('memberAge').value = '';
     document.getElementById('memberPhone').value = '';
     document.getElementById('memberMemo').value = '';
+    renderGroupSelect('memberGroup', '');
     document.getElementById('memberModal').classList.add('active');
 });
 
@@ -178,6 +193,7 @@ function openEditModal(id) {
     document.getElementById('memberAge').value = member.age || '';
     document.getElementById('memberPhone').value = member.phone || '';
     document.getElementById('memberMemo').value = member.memo || '';
+    renderGroupSelect('memberGroup', member.group_id || '');
     document.getElementById('memberModal').classList.add('active');
 }
 
@@ -193,6 +209,7 @@ async function saveMember() {
         age: document.getElementById('memberAge').value || null,
         phone: document.getElementById('memberPhone').value.trim() || null,
         memo: document.getElementById('memberMemo').value.trim() || null,
+        group_id: document.getElementById('memberGroup').value || null,
     };
 
     const saveBtn = document.getElementById('saveMemberBtn');
@@ -412,30 +429,40 @@ function updateRevolutionUI() {
     const dashboard = document.getElementById('revolutionDashboard');
     const banner = document.getElementById('startRevolutionBanner');
 
-    if (!revolutionStatus || !revolutionStatus.active) {
-        dashboard.style.display = 'none';
-        banner.style.display = 'block';
-        return;
+    if (revolutionStatus && revolutionStatus.isStarted) {
+        if (banner) banner.style.display = 'none';
+        if (dashboard) dashboard.style.display = 'block';
+
+        const calContainer = document.getElementById('revCalendarContainer');
+        if (calContainer) calContainer.style.display = 'block';
+
+        const start = new Date(revolutionStatus.startDate);
+        const today = new Date();
+        const diffTime = Math.abs(today - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+
+        const phaseInfo = getRevolutionPhase(diffDays);
+        const progress = Math.min(100, (diffDays / 28) * 100).toFixed(1);
+
+        document.getElementById('revDayCount').textContent = diffDays;
+        document.getElementById('revPhaseTitle').textContent = phaseInfo.title;
+        document.getElementById('revPhaseDesc').textContent = phaseInfo.desc;
+        document.getElementById('revStartDate').textContent = revolutionStatus.startDate;
+        document.getElementById('revProgressBar').style.width = `${progress}%`;
+        document.getElementById('revProgressPercent').textContent = progress;
+
+        apiFetch(`/api/revolution/logs/${MY_ID}`).then(res => res.json()).then(data => {
+            if (data.success) {
+                revolutionLogs = data.data;
+                renderRevCalendar();
+            }
+        });
+    } else {
+        if (banner) banner.style.display = 'block';
+        if (dashboard) dashboard.style.display = 'none';
+        const calContainer = document.getElementById('revCalendarContainer');
+        if (calContainer) calContainer.style.display = 'none';
     }
-
-    dashboard.style.display = 'block';
-    banner.style.display = 'none';
-
-    // 진행 일수 계산
-    const start = new Date(revolutionStatus.startDate);
-    const today = new Date();
-    const diffTime = Math.abs(today - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-
-    const phaseInfo = getRevolutionPhase(diffDays);
-    const progress = Math.min(100, (diffDays / 28) * 100).toFixed(1);
-
-    document.getElementById('revDayCount').textContent = diffDays;
-    document.getElementById('revPhaseTitle').textContent = phaseInfo.title;
-    document.getElementById('revPhaseDesc').textContent = phaseInfo.desc;
-    document.getElementById('revStartDate').textContent = revolutionStatus.startDate;
-    document.getElementById('revProgressBar').style.width = `${progress}%`;
-    document.getElementById('revProgressPercent').textContent = progress;
 }
 
 function getRevolutionPhase(day) {
@@ -469,20 +496,32 @@ async function startRevolutionProgram() {
 // 미션 모달 관련
 let currentShakeCount = 0;
 
-function openRevMissionModal() {
-    if (!revolutionStatus || !revolutionStatus.todayLog) return;
+async function openRevMissionModal(targetDateStr) {
+    if (!revolutionStatus) return;
 
-    const log = revolutionStatus.todayLog;
-    const start = new Date(revolutionStatus.startDate);
-    const today = new Date();
-    const diffDays = Math.ceil(Math.abs(today - start) / (1000 * 60 * 60 * 24)) || 1;
+    const dateStr = targetDateStr || new Date().toISOString().split('T')[0];
+    const targetDate = new Date(dateStr);
+    const startDate = new Date(revolutionStatus.startDate);
 
-    document.getElementById('revMissionDate').textContent = `${new Date().toLocaleDateString()} (Day ${diffDays})`;
+    // 차수 계산
+    const diffTime = targetDate - startDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    if (diffDays < 1) {
+        showToast('프로그램 시작 전 날짜입니다.', 'info');
+        return;
+    }
+
+    // 해당 날짜 로그 찾기
+    const log = revolutionLogs.find(l => l.date.split('T')[0] === dateStr) || {};
+
+    const dayText = diffDays > 28 ? '완료' : `Day ${diffDays}`;
+    document.getElementById('revMissionDate').textContent = `${dateStr} (${dayText})`;
 
     // 목표 셰이크 계산
     const target = (diffDays <= 3) ? 4 : (diffDays <= 7) ? 3 : 2;
 
-    // 단백질 목표 계산 (최근 체중 기반)
+    // 단백질 목표 계산
     const weight = revolutionStatus.lastWeight || 0;
     const proteinTarget = weight ? Math.round(weight * 1.2) : 0;
 
@@ -492,6 +531,8 @@ function openRevMissionModal() {
     const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
     const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+
+    currentShakeCount = log.shake_count || 0;
 
     setTxt('targetShake', target);
     setTxt('targetProtein', proteinTarget);
@@ -517,9 +558,12 @@ function adjustShake(val) {
 }
 
 async function saveRevLog() {
+    const dateText = document.getElementById('revMissionDate').textContent;
+    const targetDateStr = dateText.split(' ')[0];
+
     const body = {
         memberId: MY_ID,
-        date: new Date().toISOString().split('T')[0],
+        date: targetDateStr,
         shake_count: currentShakeCount,
         fasting_hours: parseInt(document.getElementById('missFasting').value) || 0,
         hiit_done: document.getElementById('missHiit').checked,
@@ -649,4 +693,165 @@ function switchRevGuideTab(el, tab) {
     else document.getElementById('guideTabWorkout').classList.add('active');
 }
 
+// 캘린더 로직
+function renderRevCalendar() {
+    const container = document.getElementById('revCalendar');
+    const monthLabel = document.getElementById('revCalendarMonth');
+    if (!container) return;
+
+    const year = currentCalDate.getFullYear();
+    const month = currentCalDate.getMonth();
+    monthLabel.textContent = `${year}.${String(month + 1).padStart(2, '0')}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const prevLastDate = new Date(year, month, 0).getDate();
+
+    let html = '';
+    const dayLabels = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    dayLabels.forEach(label => html += `<div class="rev-cal-day-label">${label}</div>`);
+
+    // 이전 달 공백
+    for (let i = firstDay; i > 0; i--) {
+        html += `<div class="rev-cal-day other-month">${prevLastDate - i + 1}</div>`;
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // 이번 달 날짜
+    for (let d = 1; d <= lastDate; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const log = revolutionLogs.find(l => l.date.split('T')[0] === dateStr);
+        const isToday = dateStr === todayStr;
+        const hasLog = !!log;
+
+        html += `
+            <div class="rev-cal-day ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''}" 
+                 onclick="openRevMissionModal('${dateStr}')">
+                ${d}
+                ${hasLog ? '<div class="rev-cal-dot active"></div>' : ''}
+            </div>
+        `;
+    }
+
+    // 다음 달 공백 (총 42칸 기준)
+    const currentTotal = html.split('rev-cal-day').length - 1;
+    for (let i = 1; i <= (42 - currentTotal + 7); i++) {
+        if (html.split('rev-cal-day').length - 7 > 42) break;
+        html += `<div class="rev-cal-day other-month">${i}</div>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function changeRevMonth(val) {
+    currentCalDate.setMonth(currentCalDate.getMonth() + val);
+    renderRevCalendar();
+}
+
 init();
+// ===== 그룹 관리 로직 =====
+function openGroupModal() {
+    document.getElementById('groupModal').classList.add('active');
+    renderGroupList();
+}
+
+function closeGroupModal() {
+    document.getElementById('groupModal').classList.remove('active');
+}
+
+async function loadGroups() {
+    const res = await apiFetch('/api/groups');
+    if (!res) return;
+    const data = await res.json();
+    if (data.success) {
+        allGroups = data.data;
+        renderGroupFilter();
+    }
+}
+
+function renderGroupFilter() {
+    const filter = document.getElementById('groupFilter');
+    if (!filter) return;
+    const currentValue = filter.value;
+    filter.innerHTML = '<option value="">모든 그룹</option>' +
+        allGroups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+    filter.value = currentValue;
+}
+
+function renderGroupSelect(elementId, selectedId) {
+    const select = document.getElementById(elementId);
+    select.innerHTML = '<option value="">그룹 없음</option>' +
+        allGroups.map(g => `<option value="${g.id}" ${g.id == selectedId ? 'selected' : ''}>${g.name}</option>`).join('');
+}
+
+function renderGroupList() {
+    const container = document.getElementById('groupListContainer');
+    if (allGroups.length === 0) {
+        container.innerHTML = '<div class="text-muted p-3 text-center">등록된 그룹이 없습니다.</div>';
+        return;
+    }
+
+    container.innerHTML = allGroups.map(g => `
+        <div class="flex-between p-2 mb-1" style="background:rgba(255,255,255,0.05); border-radius:8px;">
+            <span>${g.name}</span>
+            <div class="flex gap-1">
+                <button class="btn btn-icon btn-sm" onclick="editGroup(${g.id}, '${g.name}')">✏️</button>
+                <button class="btn btn-icon btn-sm" onclick="confirmDeleteGroup(${g.id})">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function addGroup() {
+    const nameInput = document.getElementById('newGroupName');
+    const name = nameInput.value.trim();
+    if (!name) return;
+
+    const res = await apiFetch('/api/groups', {
+        method: 'POST',
+        body: JSON.stringify({ name })
+    });
+    if (!res) return;
+    const data = await res.json();
+    if (data.success) {
+        showToast('그룹이 추가되었습니다.', 'success');
+        nameInput.value = '';
+        await loadGroups();
+        renderGroupList();
+    } else {
+        showToast(data.message, 'error');
+    }
+}
+
+async function editGroup(id, currentName) {
+    const newName = prompt('그룹 이름을 수정합니다:', currentName);
+    if (!newName || newName === currentName) return;
+
+    const res = await apiFetch(`/api/groups/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name: newName })
+    });
+    if (!res) return;
+    const data = await res.json();
+    if (data.success) {
+        showToast('수정되었습니다.', 'success');
+        await loadGroups();
+        renderGroupList();
+        await loadMembers();
+    }
+}
+
+async function confirmDeleteGroup(id) {
+    if (!confirm('그룹을 삭제하시겠습니까? 소속된 회원은 그룹 없음 상태가 됩니다.')) return;
+
+    const res = await apiFetch(`/api/groups/${id}`, { method: 'DELETE' });
+    if (!res) return;
+    const data = await res.json();
+    if (data.success) {
+        showToast('삭제되었습니다.', 'success');
+        await loadGroups();
+        renderGroupList();
+        await loadMembers();
+    }
+}

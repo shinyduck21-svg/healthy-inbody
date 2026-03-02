@@ -56,6 +56,20 @@
                     <span class="rev-stat text-muted">시작일: <span id="revStartDate">-</span></span>
                     <span class="rev-stat text-muted">진행률: <span id="revProgressPercent">3.5</span>%</span>
                 </div>
+
+                <!-- 캘린더 영역 추가 -->
+                <div id="revCalendarContainer" class="mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                    <div class="calendar-header flex-between mb-2">
+                        <span style="font-size:0.9rem; font-weight:700;">📅 미션 히스토리</span>
+                        <div class="flex gap-1" style="align-items:center;">
+                            <button class="btn btn-secondary btn-xs" onclick="changeRevMonth(-1)">◀</button>
+                            <span id="revCalendarMonth"
+                                style="font-size:0.85rem; min-width:80px; text-align:center; font-weight:600;">2026.03</span>
+                            <button class="btn btn-secondary btn-xs" onclick="changeRevMonth(1)">▶</button>
+                        </div>
+                    </div>
+                    <div id="revCalendar" class="rev-calendar"></div>
+                </div>
             </div>
         </div>
 
@@ -118,11 +132,19 @@
             </div>
         </div>
 
-        <!-- 검색 -->
+        <!-- 검색 및 필터 -->
         <div class="card mb-3" style="padding:1rem 1.5rem;">
-            <div class="search-wrapper">
-                <span class="search-icon">🔍</span>
-                <input class="form-input search-input" type="text" id="searchInput" placeholder="이름 또는 연락처로 검색..." />
+            <div class="flex gap-2" style="align-items: center;">
+                <div class="search-wrapper" style="flex: 1;">
+                    <span class="search-icon">🔍</span>
+                    <input class="form-input search-input" type="text" id="memberSearch" oninput="debounceSearch()"
+                        placeholder="이름 또는 연락처로 검색..." />
+                </div>
+                <select class="form-select" id="groupFilter" onchange="loadMembers()"
+                    style="width: auto; min-width: 150px;">
+                    <option value="">모든 그룹</option>
+                </select>
+                <button class="btn btn-secondary" onclick="openGroupModal()">⚙️ 그룹 관리</button>
             </div>
         </div>
 
@@ -162,17 +184,25 @@
                 </div>
                 <div class="form-grid mb-2">
                     <div class="form-group">
+                        <label class="form-label" for="memberGroup">소속 그룹</label>
+                        <select class="form-select" id="memberGroup">
+                            <option value="">그룹 없음</option>
+                            <!-- 그룹 목록 동적 삽입 -->
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label" for="memberAge">나이</label>
                         <input class="form-input" type="number" id="memberAge" placeholder="25" />
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="memberPhone">연락처</label>
-                        <input class="form-input" type="tel" id="memberPhone" placeholder="010-0000-0000" />
-                    </div>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="form-label" for="memberPhone">연락처</label>
+                    <input class="form-input" type="tel" id="memberPhone" placeholder="010-0000-0000" />
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="memberMemo">메모</label>
-                    <textarea class="form-textarea" id="memberMemo" placeholder="특이사항, 목표 등"></textarea>
+                    <textarea class="form-textarea" id="memberMemo" placeholder="특이사항, 목표 등"
+                        style="height: 80px;"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -182,6 +212,27 @@
         </div>
     </div>
 
+    <!-- ====== 그룹 관리 모달 ====== -->
+    <div class="modal-overlay" id="groupModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">그룹 관리</h2>
+                <button class="close-btn" onclick="closeGroupModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="flex gap-1 mb-3">
+                    <input class="form-input" type="text" id="newGroupName" placeholder="새 그룹 이름 (예: 챌린지반)" />
+                    <button class="btn btn-primary" onclick="addGroup()">추가</button>
+                </div>
+                <div id="groupListContainer" class="list-container">
+                    <!-- 그룹 목록 동적 삽입 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeGroupModal()">닫기</button>
+            </div>
+        </div>
+    </div>
     <!-- ====== 회원 삭제 확인 모달 ====== -->
     <div class="modal-overlay" id="deleteModal">
         <div class="modal" style="max-width:380px;">
@@ -455,7 +506,8 @@
                 <div id="guideTabWorkout" class="rev-tab-content">
                     <div style="padding:1.2rem;">
                         <h3 class="mb-2" style="font-size:1rem; color:var(--primary);">🔥 4분 HIIT (고강도 인터벌 운동)</h3>
-                        <p class="text-muted mb-3" style="font-size:0.85rem;">신진대사를 깨우는 가장 강력한 방법입니다. '숨이 턱에 찰 정도'의 강도로
+                        <p class="text-muted mb-3" style="font-size:0.85rem;">신진대사를 깨우는 가장 강력한 방법입니다. '숨이 턱에 찰 정도'의
+                            강도로
                             수행하세요.</p>
 
                         <div
@@ -468,7 +520,8 @@
                                 <span style="font-weight:700;">불완전 휴식 (10초)</span>
                                 <span class="badge badge-secondary">REST</span>
                             </div>
-                            <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">총 8라운드 반복 (약 4분)
+                            <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">총 8라운드 반복 (약
+                                4분)
                             </div>
                         </div>
 
