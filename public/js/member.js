@@ -27,11 +27,13 @@ let weightChartInstance = null;
 let inbodyChartInstance = null;
 let radarChartInstance = null;
 let deletingRecordId = null;
-let revolutionStatus = null; // 내 몸 혁명 상태 데이터
+let revolutionStatus = null;
+let revolutionLogs = [];
+let allGroups = [];
 
 // ===== 초기화 =====
 async function init() {
-    await Promise.all([loadMember(), loadRecords(), loadRevolutionStatus()]);
+    await Promise.all([loadMember(), loadRecords(), loadRevolutionStatus(), loadGroups()]);
 }
 
 // ===== 회원 정보 로드 =====
@@ -67,7 +69,7 @@ function renderMemberInfo(m) {
     document.getElementById('infoGender').textContent = genderLabel;
     document.getElementById('infoAge').textContent = m.age ? m.age + '세' : '-';
     document.getElementById('infoPhone').textContent = m.phone || '-';
-    document.getElementById('infoCreated').textContent = formatDate(m.created_at);
+    document.getElementById('infoGroup').textContent = m.group_name || '그룹 없음';
     document.getElementById('infoMemo').textContent = m.memo || '메모 없음';
 }
 
@@ -549,6 +551,7 @@ document.getElementById('editMemberInfoBtn').addEventListener('click', () => {
     document.getElementById('editAge').value = memberData.age || '';
     document.getElementById('editPhone').value = memberData.phone || '';
     document.getElementById('editMemo').value = memberData.memo || '';
+    renderGroupSelect('editGroup', memberData.group_id || '');
     document.getElementById('editMemberModal').classList.add('active');
 });
 
@@ -562,6 +565,7 @@ async function saveMemberInfo() {
         age: document.getElementById('editAge').value || null,
         phone: document.getElementById('editPhone').value.trim() || null,
         memo: document.getElementById('editMemo').value.trim() || null,
+        group_id: document.getElementById('editGroup').value || null,
     };
 
     const res = await apiFetch(`/api/members/${MEMBER_ID}`, { method: 'PUT', body: JSON.stringify(body) });
@@ -731,30 +735,40 @@ function updateRevolutionUI() {
     const dashboard = document.getElementById('revolutionDashboard');
     const banner = document.getElementById('startRevolutionBanner');
 
-    if (!revolutionStatus || !revolutionStatus.active) {
-        dashboard.style.display = 'none';
-        banner.style.display = 'block';
-        return;
+    if (revolutionStatus && revolutionStatus.isStarted) {
+        if (banner) banner.style.display = 'none';
+        if (dashboard) dashboard.style.display = 'block';
+
+        const calContainer = document.getElementById('revCalendarContainer');
+        if (calContainer) calContainer.style.display = 'block';
+
+        const start = new Date(revolutionStatus.startDate);
+        const today = new Date();
+        const diffTime = Math.abs(today - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+
+        const phaseInfo = getRevolutionPhase(diffDays);
+        const progress = Math.min(100, (diffDays / 28) * 100).toFixed(1);
+
+        document.getElementById('revDayCount').textContent = diffDays;
+        document.getElementById('revPhaseTitle').textContent = phaseInfo.title;
+        document.getElementById('revPhaseDesc').textContent = phaseInfo.desc;
+        document.getElementById('revStartDate').textContent = revolutionStatus.startDate;
+        document.getElementById('revProgressBar').style.width = `${progress}%`;
+        document.getElementById('revProgressPercent').textContent = progress;
+
+        apiFetch(`/api/revolution/logs/${MEMBER_ID}`).then(res => res.json()).then(data => {
+            if (data.success) {
+                revolutionLogs = data.data;
+                renderRevCalendar();
+            }
+        });
+    } else {
+        if (banner) banner.style.display = 'block';
+        if (dashboard) dashboard.style.display = 'none';
+        const calContainer = document.getElementById('revCalendarContainer');
+        if (calContainer) calContainer.style.display = 'none';
     }
-
-    dashboard.style.display = 'block';
-    banner.style.display = 'none';
-
-    // 진행 일수 계산
-    const start = new Date(revolutionStatus.startDate);
-    const today = new Date();
-    const diffTime = Math.abs(today - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-
-    const phaseInfo = getRevolutionPhase(diffDays);
-    const progress = Math.min(100, (diffDays / 28) * 100).toFixed(1);
-
-    document.getElementById('revDayCount').textContent = diffDays;
-    document.getElementById('revPhaseTitle').textContent = phaseInfo.title;
-    document.getElementById('revPhaseDesc').textContent = phaseInfo.desc;
-    document.getElementById('revStartDate').textContent = revolutionStatus.startDate;
-    document.getElementById('revProgressBar').style.width = `${progress}%`;
-    document.getElementById('revProgressPercent').textContent = progress;
 }
 
 function getRevolutionPhase(day) {
@@ -788,15 +802,26 @@ async function startRevolutionProgram() {
 // 미션 모달 관련
 let currentShakeCount = 0;
 
-function openRevMissionModal() {
-    if (!revolutionStatus || !revolutionStatus.todayLog) return;
+async function openRevMissionModal(targetDateStr) {
+    if (!revolutionStatus) return;
 
-    const log = revolutionStatus.todayLog;
-    const start = new Date(revolutionStatus.startDate);
-    const today = new Date();
-    const diffDays = Math.ceil(Math.abs(today - start) / (1000 * 60 * 60 * 24)) || 1;
+    const dateStr = targetDateStr || new Date().toISOString().split('T')[0];
+    const targetDate = new Date(dateStr);
+    const startDate = new Date(revolutionStatus.startDate);
 
-    document.getElementById('revMissionDate').textContent = `${new Date().toLocaleDateString()} (Day ${diffDays})`;
+    // 차수 계산
+    const diffTime = targetDate - startDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    if (diffDays < 1) {
+        showToast('프로그램 시작 전 날짜입니다.', 'info');
+        return;
+    }
+
+    const log = revolutionLogs.find(l => l.date.split('T')[0] === dateStr) || {};
+
+    const dayText = diffDays > 28 ? '완료' : `Day ${diffDays}`;
+    document.getElementById('revMissionDate').textContent = `${dateStr} (${dayText})`;
 
     // 목표 셰이크 계산
     const target = (diffDays <= 3) ? 4 : (diffDays <= 7) ? 3 : 2;
@@ -811,6 +836,8 @@ function openRevMissionModal() {
     const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
     const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+
+    currentShakeCount = log.shake_count || 0;
 
     setTxt('targetShake', target);
     setTxt('targetProtein', proteinTarget);
@@ -836,9 +863,12 @@ function adjustShake(val) {
 }
 
 async function saveRevLog() {
+    const dateText = document.getElementById('revMissionDate').textContent;
+    const targetDateStr = dateText.split(' ')[0];
+
     const body = {
         memberId: MEMBER_ID,
-        date: new Date().toISOString().split('T')[0],
+        date: targetDateStr,
         shake_count: currentShakeCount,
         fasting_hours: parseInt(document.getElementById('missFasting').value) || 0,
         hiit_done: document.getElementById('missHiit').checked,
@@ -971,6 +1001,75 @@ function switchRevGuideTab(el, tab) {
 
     if (tab === 'food') document.getElementById('guideTabFood').classList.add('active');
     else document.getElementById('guideTabWorkout').classList.add('active');
+}
+
+// 캘린더 로직
+function renderRevCalendar() {
+    const container = document.getElementById('revCalendar');
+    const monthLabel = document.getElementById('revCalendarMonth');
+    if (!container) return;
+
+    const year = currentCalDate.getFullYear();
+    const month = currentCalDate.getMonth();
+    monthLabel.textContent = `${year}.${String(month + 1).padStart(2, '0')}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const prevLastDate = new Date(year, month, 0).getDate();
+
+    let html = '';
+    const dayLabels = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    dayLabels.forEach(label => html += `<div class="rev-cal-day-label">${label}</div>`);
+
+    for (let i = firstDay; i > 0; i--) {
+        html += `<div class="rev-cal-day other-month">${prevLastDate - i + 1}</div>`;
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    for (let d = 1; d <= lastDate; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const log = revolutionLogs.find(l => l.date.split('T')[0] === dateStr);
+        const isToday = dateStr === todayStr;
+        const hasLog = !!log;
+
+        html += `
+            <div class="rev-cal-day ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''}" 
+                 onclick="openRevMissionModal('${dateStr}')">
+                ${d}
+                ${hasLog ? '<div class="rev-cal-dot active"></div>' : ''}
+            </div>
+        `;
+    }
+
+    const currentTotal = html.split('rev-cal-day').length - 1;
+    for (let i = 1; i <= (42 - currentTotal + 7); i++) {
+        if (html.split('rev-cal-day').length - 7 > 42) break;
+        html += `<div class="rev-cal-day other-month">${i}</div>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function changeRevMonth(val) {
+    currentCalDate.setMonth(currentCalDate.getMonth() + val);
+    renderRevCalendar();
+}
+
+// ===== 그룹 관리 로직 =====
+async function loadGroups() {
+    const res = await apiFetch('/api/groups');
+    if (!res) return;
+    const data = await res.json();
+    if (data.success) {
+        allGroups = data.data;
+    }
+}
+
+function renderGroupSelect(elementId, selectedId) {
+    const select = document.getElementById(elementId);
+    if (!select) return;
+    select.innerHTML = '<option value="">그룹 없음</option>' +
+        allGroups.map(g => `<option value="${g.id}" ${g.id == selectedId ? 'selected' : ''}>${g.name}</option>`).join('');
 }
 
 init();

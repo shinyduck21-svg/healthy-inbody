@@ -56,6 +56,20 @@
                     <span class="rev-stat text-muted">시작일: <span id="revStartDate">-</span></span>
                     <span class="rev-stat text-muted">진행률: <span id="revProgressPercent">3.5</span>%</span>
                 </div>
+
+                <!-- 캘린더 영역 추가 -->
+                <div id="revCalendarContainer" class="mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                    <div class="calendar-header flex-between mb-2">
+                        <span style="font-size:0.9rem; font-weight:700;">📅 미션 히스토리</span>
+                        <div class="flex gap-1" style="align-items:center;">
+                            <button class="btn btn-secondary btn-xs" onclick="changeRevMonth(-1)">◀</button>
+                            <span id="revCalendarMonth"
+                                style="font-size:0.85rem; min-width:80px; text-align:center; font-weight:600;">2026.03</span>
+                            <button class="btn btn-secondary btn-xs" onclick="changeRevMonth(1)">▶</button>
+                        </div>
+                    </div>
+                    <div id="revCalendar" class="rev-calendar"></div>
+                </div>
             </div>
         </div>
 
@@ -97,23 +111,23 @@
             <div class="section-title">기본 정보</div>
             <div class="info-grid" id="memberInfoGrid">
                 <div class="info-item">
-                    <div class="info-key">성별</div>
+                    <div class="info-label">성별</div>
                     <div class="info-value" id="infoGender">-</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-key">나이</div>
+                    <div class="info-label">나이</div>
                     <div class="info-value" id="infoAge">-</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-key">연락처</div>
+                    <div class="info-label">연락처</div>
                     <div class="info-value" id="infoPhone">-</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-key">등록일</div>
-                    <div class="info-value" id="infoCreated">-</div>
+                    <div class="info-label">소속 그룹</div>
+                    <div class="info-value" id="infoGroup">그룹 없음</div>
                 </div>
-                <div class="info-item" style="grid-column:1/-1;">
-                    <div class="info-key">메모</div>
+                <div class="info-item" style="grid-column: span 2;">
+                    <div class="info-label">메모</div>
                     <div class="info-value" id="infoMemo" style="font-weight:400; color:var(--text-secondary);">-</div>
                 </div>
             </div>
@@ -278,13 +292,19 @@
                         <input class="form-input" type="number" id="editAge" placeholder="25" />
                     </div>
                     <div class="form-group">
-                        <label class="form-label">연락처</label>
-                        <input class="form-input" type="tel" id="editPhone" />
+                        <label class="form-label">소속 그룹</label>
+                        <select class="form-select" id="editGroup">
+                            <option value="">그룹 없음</option>
+                        </select>
                     </div>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="form-label">연락처</label>
+                    <input class="form-input" type="tel" id="editPhone" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">메모</label>
-                    <textarea class="form-textarea" id="editMemo"></textarea>
+                    <textarea class="form-textarea" id="editMemo" style="height: 80px;"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
