@@ -11,24 +11,32 @@ router.get('/', async (req, res) => {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ success: false, message: '권한이 없습니다.' });
         }
-        const { search } = req.query;
-        let members;
+        const { search, group_id } = req.query;
+        let query = `
+            SELECT m.*, g.name as group_name, COUNT(ir.id) as record_count, MAX(ir.measured_at) as last_measured
+            FROM members m
+            LEFT JOIN member_groups g ON m.group_id = g.id
+            LEFT JOIN inbody_records ir ON m.id = ir.member_id
+        `;
+        let params = [];
+        let where = [];
+
         if (search) {
-            members = await db.all(`
-        SELECT m.*, COUNT(ir.id) as record_count, MAX(ir.measured_at) as last_measured
-        FROM members m
-        LEFT JOIN inbody_records ir ON m.id = ir.member_id
-        WHERE m.name ILIKE $1 OR m.phone ILIKE $1
-        GROUP BY m.id ORDER BY m.name
-      `, [`%${search}%`]);
-        } else {
-            members = await db.all(`
-        SELECT m.*, COUNT(ir.id) as record_count, MAX(ir.measured_at) as last_measured
-        FROM members m
-        LEFT JOIN inbody_records ir ON m.id = ir.member_id
-        GROUP BY m.id ORDER BY m.name
-      `);
+            params.push(`%${search}%`);
+            where.push(`(m.name ILIKE $${params.length} OR m.phone ILIKE $${params.length})`);
         }
+        if (group_id) {
+            params.push(group_id);
+            where.push(`m.group_id = $${params.length}`);
+        }
+
+        if (where.length > 0) {
+            query += ` WHERE ` + where.join(' AND ');
+        }
+
+        query += ` GROUP BY m.id, g.name ORDER BY m.name`;
+
+        const members = await db.all(query, params);
         res.json({ success: true, data: members });
     } catch (err) {
         console.error(err);
@@ -39,12 +47,16 @@ router.get('/', async (req, res) => {
 // GET /api/members/:id
 router.get('/:id', async (req, res) => {
     try {
-        // 본인 정보거나 관리자여야 함
         if (req.user.role !== 'admin' && req.user.id != req.params.id) {
             return res.status(403).json({ success: false, message: '권한이 없습니다.' });
         }
 
-        const member = await db.get('SELECT * FROM members WHERE id = $1', [req.params.id]);
+        const member = await db.get(`
+            SELECT m.*, g.name as group_name 
+            FROM members m 
+            LEFT JOIN member_groups g ON m.group_id = g.id 
+            WHERE m.id = $1
+        `, [req.params.id]);
         if (!member) return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
         res.json({ success: true, data: member });
     } catch (err) {
@@ -55,12 +67,12 @@ router.get('/:id', async (req, res) => {
 // POST /api/members
 router.post('/', async (req, res) => {
     try {
-        const { name, gender, age, phone, memo } = req.body;
+        const { name, gender, age, phone, memo, group_id } = req.body;
         if (!name) return res.status(400).json({ success: false, message: '이름은 필수입니다.' });
 
         const result = await db.run(
-            'INSERT INTO members (name, gender, age, phone, memo) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-            [name, gender || null, age || null, phone || null, memo || null]
+            'INSERT INTO members (name, gender, age, phone, memo, group_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [name, gender || null, age || null, phone || null, memo || null, group_id || null]
         );
         const newMember = await db.get('SELECT * FROM members WHERE id = $1', [result.lastInsertRowid]);
         res.status(201).json({ success: true, data: newMember });
@@ -73,18 +85,17 @@ router.post('/', async (req, res) => {
 // PUT /api/members/:id
 router.put('/:id', async (req, res) => {
     try {
-        const { name, gender, age, phone, memo } = req.body;
+        const { name, gender, age, phone, memo, group_id } = req.body;
         const existing = await db.get('SELECT id FROM members WHERE id = $1', [req.params.id]);
         if (!existing) return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
 
-        // 본인 정보거나 관리자여야 함
         if (req.user.role !== 'admin' && req.user.id != req.params.id) {
             return res.status(403).json({ success: false, message: '권한이 없습니다.' });
         }
 
         await db.run(
-            'UPDATE members SET name = $1, gender = $2, age = $3, phone = $4, memo = $5 WHERE id = $6',
-            [name, gender || null, age || null, phone || null, memo || null, req.params.id]
+            'UPDATE members SET name = $1, gender = $2, age = $3, phone = $4, memo = $5, group_id = $6 WHERE id = $7',
+            [name, gender || null, age || null, phone || null, memo || null, group_id || null, req.params.id]
         );
         const updated = await db.get('SELECT * FROM members WHERE id = $1', [req.params.id]);
         res.json({ success: true, data: updated });

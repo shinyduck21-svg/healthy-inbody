@@ -26,6 +26,12 @@ async function initDB() {
         END IF;
       END $$;
 
+      CREATE TABLE IF NOT EXISTS member_groups (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
       CREATE TABLE IF NOT EXISTS members (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -35,6 +41,7 @@ async function initDB() {
         memo TEXT,
         email TEXT UNIQUE,
         password_hash TEXT,
+        group_id INTEGER REFERENCES member_groups(id) ON DELETE SET NULL,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE(name, phone)
       );
@@ -46,6 +53,9 @@ async function initDB() {
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='password_hash') THEN
           ALTER TABLE members ADD COLUMN password_hash TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='group_id') THEN
+          ALTER TABLE members ADD COLUMN group_id INTEGER REFERENCES member_groups(id) ON DELETE SET NULL;
         END IF;
       END $$;
 

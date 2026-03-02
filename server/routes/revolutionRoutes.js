@@ -31,7 +31,7 @@ router.get('/status/:memberId', authenticate, async (req, res) => {
         const member = await db.get('SELECT revolution_start_date FROM members WHERE id = $1', [memberId]);
 
         if (!member || !member.revolution_start_date) {
-            return res.json({ success: true, active: false });
+            return res.json({ success: true, isStarted: false });
         }
 
         // 오늘 날짜 로그 가져오기
@@ -43,7 +43,7 @@ router.get('/status/:memberId', authenticate, async (req, res) => {
 
         res.json({
             success: true,
-            active: true,
+            isStarted: true,
             startDate: member.revolution_start_date,
             todayLog: log || { shake_count: 0, hiit_done: false, no_sugar: true, no_alcohol: true, fasting_hours: 0 },
             lastWeight: inbody ? inbody.weight : null

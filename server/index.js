@@ -9,6 +9,7 @@ const memberRoutes = require('./routes/memberRoutes');
 const inbodyRoutes = require('./routes/inbodyRoutes');
 const userRoutes = require('./routes/userRoutes');
 const revolutionRoutes = require('./routes/revolutionRoutes');
+const groupRoutes = require('./routes/groupRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,7 @@ app.use('/api/members', memberRoutes);
 app.use('/api/inbody', inbodyRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/revolution', revolutionRoutes);
+app.use('/api/groups', groupRoutes);
 
 app.get('*', (req, res) => {
     if (req.path === '/login') {

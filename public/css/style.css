@@ -515,12 +515,21 @@ h3 {
 /* ===== 알림 토스트 ===== */
 .toast-container {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: 2rem;
+  right: 2rem;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+}
+
+.list-container {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-sm);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .toast {
@@ -762,8 +771,75 @@ canvas {
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
 }
 
-/* ===== 반응형 ===== */
+/* ===== 반응형 (모바일 최적화) ===== */
 @media (max-width: 768px) {
+
+  /* 컨테이너 */
+  .container {
+    padding: 0 1rem;
+  }
+
+  /* 네비게이션 */
+  .navbar {
+    padding: 0.75rem 0;
+  }
+
+  .admin-badge {
+    display: none;
+    /* 모바일에서 이메일 배지 숨김 */
+  }
+
+  .navbar-right {
+    gap: 0.4rem;
+  }
+
+  .navbar-right .btn-sm {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .navbar-title {
+    font-size: 1.1rem;
+  }
+
+  /* 페이지 헤더 */
+  .page-header {
+    padding: 1.5rem 0 1rem;
+  }
+
+  .page-header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  /* 통계 카드 */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+  }
+
+  /* 회원 그리드 */
+  .members-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+  }
+
+  /* 폼 */
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -772,30 +848,50 @@ canvas {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .modal {
-    max-width: 100%;
-    border-radius: 16px 16px 0 0;
-    margin-top: auto;
-  }
-
+  /* 모달 - 바텀시트 방식 */
   .modal-overlay {
     align-items: flex-end;
     padding: 0;
   }
 
-  .page-header-inner {
-    flex-direction: column;
-    align-items: flex-start;
+  .modal {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    margin-top: auto;
+    max-height: 92vh;
   }
 
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+  .modal-header {
+    padding: 1.25rem 1.25rem 0;
   }
 
-  .members-grid {
-    grid-template-columns: 1fr !important;
+  .modal-body {
+    padding: 1.25rem;
   }
 
+  .modal-footer {
+    padding: 0 1.25rem 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* 토스트 */
+  .toast-container {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  .toast {
+    min-width: unset;
+    width: 100%;
+  }
+
+  /* 테이블 */
   .table-wrapper table {
     font-size: 0.8rem;
   }
@@ -805,32 +901,195 @@ canvas {
     padding: 0.7rem 0.75rem;
   }
 
-  .navbar-title {
-    font-size: 1.1rem;
+  /* 차트 */
+  .chart-container {
+    height: 240px;
   }
 
-  .toast-container {
-    left: 1rem;
-    right: 1rem;
-    bottom: 1rem;
+  /* 탭 */
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .toast {
-    min-width: unset;
+  .tab-btn {
+    white-space: nowrap;
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* ===== 내 몸 혁명 카드 모바일 최적화 ===== */
+  .revolution-card {
+    padding: 1rem;
+  }
+
+  /* 제목 + 버튼 영역: 세로 스택 */
+  .revolution-card>.flex-between:first-child {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .revolution-card>.flex-between:first-child>.flex.gap-1 {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .revolution-card>.flex-between:first-child>.flex.gap-1 .btn-primary {
+    grid-column: 1 / -1;
+    /* 오늘 미션 버튼은 전체 너비 */
+  }
+
+  .revolution-title {
+    font-size: 1rem;
+  }
+
+  .revolution-badge {
+    font-size: 0.9rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  /* 캘린더 */
+  .rev-calendar {
+    gap: 4px;
+    padding: 8px;
+  }
+
+  .rev-cal-day {
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
+
+  .rev-cal-day-label {
+    font-size: 0.65rem;
+    padding: 3px 0;
+  }
+
+  .rev-cal-day.today::after {
+    font-size: 0.4rem;
+    top: -6px;
+    padding: 0 2px;
+  }
+
+  .rev-cal-dot {
+    width: 4px;
+    height: 4px;
+    bottom: 4px;
+  }
+
+  /* 혁명 카드 통계 영역 */
+  #revCalendarContainer .calendar-header {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  /* 회원 상세 - 차트 및 Radar 레이아웃 */
+  #latestInbodyCard,
+  #radarChartCard {
+    height: auto !important;
+  }
+
+  /* 회원 상세 페이지 헤더 버튼 */
+  .page-header-inner .flex.gap-1 {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .page-header-inner .flex.gap-1 .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* 회원 카드 안의 액션 버튼 */
+  .member-card .flex-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* 내 몸 혁명 리포트 모달의 progress 섹션 */
+  .rev-report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 가이드 탭 */
+  .rev-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 0;
+  }
+
+  .rev-tab {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+  }
+
+  /* 가이드 그리드 */
+  .guide-grid {
+    grid-template-columns: 1fr;
   }
 }
 
+/* ===== 소형 모바일 (480px 이하) ===== */
 @media (max-width: 480px) {
   .form-grid-3 {
     grid-template-columns: 1fr;
   }
 
-  .container {
-    padding: 0 1rem;
+  .card {
+    padding: 1rem;
   }
 
-  .card {
-    padding: 1.25rem;
+  /* 통계 카드 1열로 */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .stat-value {
+    font-size: 1.2rem;
+  }
+
+  /* 버튼 더 작게 */
+  .btn {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  /* 캘린더 더 compact */
+  .rev-calendar {
+    gap: 3px;
+    padding: 6px;
+  }
+
+  .rev-cal-day {
+    font-size: 0.7rem;
+    border-radius: 4px;
+  }
+
+  .rev-cal-day.today::after {
+    display: none;
+    /* 극소형에서는 TODAY 라벨 숨김 */
+  }
+
+  /* 네브바 타이틀 숨기고 로고만 보이기 */
+  .navbar-title {
+    display: none;
+  }
+
+  /* 페이지 헤더 간격 줄이기 */
+  .page-header {
+    padding: 1rem 0 0.75rem;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  /* 로그인 카드 패딩 줄이기 */
+  .login-card {
+    padding: 1.5rem;
   }
 }
 
@@ -1312,4 +1571,125 @@ canvas {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Revolution Calendar Premium Styles - Enhanced (Avoiding Grey) */
+.rev-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.02);
+}
+
+.rev-cal-day-label {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 6px 0;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  opacity: 0.6;
+}
+
+.rev-cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+}
+
+.rev-cal-day:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.rev-cal-day.today {
+  border: 2px solid var(--primary);
+  background: rgba(255, 107, 107, 0.08);
+  box-shadow: 0 0 15px rgba(255, 107, 107, 0.15);
+}
+
+.rev-cal-day.today::after {
+  content: 'TODAY';
+  position: absolute;
+  top: -8px;
+  font-size: 0.5rem;
+  background: var(--primary);
+  color: white;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 900;
+  z-index: 2;
+}
+
+.rev-cal-day.other-month {
+  opacity: 0.1;
+  cursor: default;
+  pointer-events: none;
+  background: none;
+}
+
+.rev-cal-day.has-log {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(255, 150, 100, 0.25));
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
+}
+
+.rev-cal-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  position: absolute;
+  bottom: 8px;
+  box-shadow: 0 0 8px var(--primary);
+}
+
+.rev-cal-dot.active {
+  animation: pulse-dot 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4);
+  }
+
+  70% {
+    transform: scale(1.4);
+    opacity: 0.7;
+    box-shadow: 0 0 0 6px rgba(255, 107, 107, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+  }
+}
+
+.btn-xs {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
 }
