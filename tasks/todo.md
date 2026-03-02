@@ -16,8 +16,10 @@
 - [x] **내 몸 혁명 미션 항목 변경 (수분/수면/확언)** `[x]`
   - [x] HTML(index, member) 레이블 및 이모지 수정 (완료)
   - [x] JS(index, member) 리포트 이모지 수정 (완료)
+- [x] **혁명 미션 이름 변경 (몸, 마음, 삶의근육)** `[x]`
+  - [x] index.html, member.html 타이틀 수정 완료
 - [/] **최종 Git 배포 및 정리** `[/]`
-  - [ ] Git Commit & Push (진행 중)
+  - [ ] Git Commit & Push (안내 예정)
 
 
 
