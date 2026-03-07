@@ -18,8 +18,21 @@
   - [x] JS(index, member) 리포트 이모지 수정 (완료)
 - [x] **혁명 미션 이름 변경 (몸, 마음, 삶의근육)** `[x]`
   - [x] index.html, member.html 타이틀 수정 완료
+- [x] **접속 로그 기능 구현** `[x]`
+  - [x] `access_logs` 테이블 스키마 추가 (server/db.js)
+  - [x] `accessLogger` 미들웨어 구현 (server/middleware/logger.js)
+  - [x] Express 앱에 미들웨어 및 유저 식별 로직 적용 (server/index.js)
+- [x] **관리자 추가 및 로그 조회 기능 고도화** `[x]`
+  - [x] 추가 관리자 계정 생성 (`admin2@mongfit.com`)
+  - [x] 관리자 전용 접속 로그 조회 API 구현
+  - [x] 관리자 페이지 내 로그 확인 UI (모달 등) 추가
+- [x] **접속 로그 최적화 (데이터 경량화)** `[x]`
+  - [x] 정적 파일(CSS, JS, 이미지 등) 로그 제외 필터링
+  - [x] 중복되거나 불필요한 GET 요청 로깅 정책 조정
+  - [x] 최적화 후 검증
 - [/] **최종 Git 배포 및 정리** `[/]`
-  - [ ] Git Commit & Push (안내 예정)
+  - [/] 접속 로그 및 관리자 고도화 기능 Commit & Push
+  - [ ] walkthrough.md 최종 검토 및 세션 마무리
 
 
 

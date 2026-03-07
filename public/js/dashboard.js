@@ -14,9 +14,66 @@ if (localStorage.getItem('mongfit_role') !== 'admin') {
 
 // 관리자 이메일 및 역할 표시
 const adminEmail = getAdminName(); // auth.js에서 ADMIN_KEY(이메일)를 반환함
-document.getElementById('adminName').textContent = `${adminEmail} (관리자)`;
+const userRole = localStorage.getItem('mongfit_role');
+document.getElementById('adminName').textContent = `${adminEmail} (${userRole === 'admin' ? '관리자' : '회원'})`;
+
+// 관리자 전용 버튼 표시
+if (userRole === 'admin') {
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
+}
 
 let allMembers = [];
+// ... (생략된 변수들)
+
+// ===== 접속 로그 모달 관련 =====
+async function openAccessLogsModal() {
+    document.getElementById('accessLogsModal').classList.add('active');
+    await loadAccessLogs();
+}
+
+function closeAccessLogsModal() {
+    document.getElementById('accessLogsModal').classList.remove('active');
+}
+
+async function loadAccessLogs() {
+    const tableBody = document.getElementById('accessLogsTableBody');
+    tableBody.innerHTML = '<tr><td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);"><span class="spinner"></span> 로그를 불러오는 중...</td></tr>';
+
+    try {
+        const res = await apiFetch('/api/admin/logs');
+        if (!res) return;
+        const data = await res.json();
+
+        if (data.success) {
+            if (data.logs.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);">기록된 로그가 없습니다.</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = data.logs.map(log => {
+                const date = new Date(log.created_at).toLocaleString('ko-KR');
+                const userDisplay = log.user_name ? `${log.user_name}(${log.user_role})` : (log.user_role === 'admin' ? `관리자(${log.user_id})` : '비회원');
+                const ua = log.user_agent || '-';
+                const shortUA = ua.length > 30 ? ua.substring(0, 30) + '...' : ua;
+
+                return `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 0.8rem 1rem; white-space: nowrap;">${date}</td>
+                        <td style="padding: 0.8rem 1rem;">${userDisplay}</td>
+                        <td style="padding: 0.8rem 1rem;">${log.ip}</td>
+                        <td style="padding: 0.8rem 1rem;"><span class="badge ${log.method === 'POST' ? 'badge-primary' : 'badge-secondary'}" style="font-size: 0.7rem;">${log.method}</span></td>
+                        <td style="padding: 0.8rem 1rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${log.path}">${log.path}</td>
+                        <td style="padding: 0.8rem 1rem; color: var(--text-muted); font-size: 0.8rem;" title="${ua}">${shortUA}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tableBody.innerHTML = `<tr><td colspan="6" style="padding: 2rem; text-align: center; color: var(--error);">${data.message}</td></tr>`;
+        }
+    } catch (err) {
+        tableBody.innerHTML = '<tr><td colspan="6" style="padding: 2rem; text-align: center; color: var(--error);">로그를 불러오는 중 오류가 발생했습니다.</td></tr>';
+    }
+}
 let allGroups = [];
 let currentGenderFilter = 'all'; // 'all', 'M', 'F'
 let currentGroupFilter = ''; // Group ID

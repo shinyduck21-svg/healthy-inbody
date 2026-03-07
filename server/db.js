@@ -94,6 +94,18 @@ async function initDB() {
           ALTER TABLE members ADD COLUMN revolution_start_date TEXT;
         END IF;
       END $$;
+
+      -- 접속 로그 테이블 추가
+      CREATE TABLE IF NOT EXISTS access_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER, -- members 또는 admins의 ID (nullable)
+        user_role TEXT, -- 'admin' or 'member'
+        ip TEXT,
+        method TEXT,
+        path TEXT,
+        user_agent TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
 
     // 기본 관리자 계정 생성
@@ -102,6 +114,13 @@ async function initDB() {
       const hash = bcrypt.hashSync('admin123', 10);
       await client.query('INSERT INTO admins (email, password_hash) VALUES ($1, $2)', ['admin@mongfit.com', hash]);
       console.log('✅ 기본 관리자 계정 생성: admin@mongfit.com / admin123');
+    }
+
+    const existing2 = await client.query('SELECT id FROM admins WHERE email = $1', ['admin2@mongfit.com']);
+    if (existing2.rowCount === 0) {
+      const hash = bcrypt.hashSync('admin1234', 10);
+      await client.query('INSERT INTO admins (email, password_hash) VALUES ($1, $2)', ['admin2@mongfit.com', hash]);
+      console.log('✅ 추가 관리자 계정 생성: admin2@mongfit.com / admin1234');
     }
 
     console.log('✅ PostgreSQL(Supabase) DB 초기화 완료 (MongFit)');

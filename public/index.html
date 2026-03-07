@@ -23,6 +23,8 @@
                     <div class="admin-dot"></div>
                     <span id="adminName">관리자</span>
                 </div>
+                <button class="btn btn-secondary btn-sm admin-only" id="viewAccessLogsBtn"
+                    onclick="openAccessLogsModal()" style="display:none;">접속 로그</button>
                 <button class="btn btn-secondary btn-sm" id="myProfileBtn">내 정보</button>
                 <button class="btn btn-secondary btn-sm" onclick="logout()" id="logoutBtn">로그아웃</button>
             </div>
@@ -536,6 +538,40 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeRevGuideModal()">알겠습니다</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 접속 로그 모달 ====== -->
+    <div class="modal-overlay" id="accessLogsModal">
+        <div class="modal" style="max-width: 900px; width: 95%;">
+            <div class="modal-header">
+                <h2 class="modal-title">시스템 접속 로그 (최근 100건)</h2>
+                <button class="close-btn" onclick="closeAccessLogsModal()">✕</button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0;">
+                <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="background: var(--bg-card-hover); text-align: left; position: sticky; top: 0;">
+                            <th style="padding: 0.8rem 1rem;">시간</th>
+                            <th style="padding: 0.8rem 1rem;">사용자</th>
+                            <th style="padding: 0.8rem 1rem;">IP</th>
+                            <th style="padding: 0.8rem 1rem;">메소드</th>
+                            <th style="padding: 0.8rem 1rem;">경로</th>
+                            <th style="padding: 0.8rem 1rem;">브라우저</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accessLogsTableBody">
+                        <!-- 데이터 로딩 표시 -->
+                        <tr>
+                            <td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);">로그를
+                                불러오는 중...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAccessLogsModal()">닫기</button>
             </div>
         </div>
     </div>
