@@ -24,6 +24,27 @@ router.post('/start', authenticate, async (req, res) => {
     }
 });
 
+// POST /api/revolution/stop - 프로그램 중단
+router.post('/stop', authenticate, async (req, res) => {
+    try {
+        const { memberId } = req.body;
+        if (!memberId) {
+            return res.status(400).json({ success: false, message: '필수 정보가 누락되었습니다.' });
+        }
+
+        // 권한 확인 (관리자 또는 본인)
+        if (req.user.role !== 'admin' && req.user.id !== parseInt(memberId)) {
+            return res.status(403).json({ success: false, message: '권한이 없습니다.' });
+        }
+
+        await db.run('UPDATE members SET revolution_start_date = NULL WHERE id = $1', [memberId]);
+        res.json({ success: true, message: '프로그램이 중단되었습니다.' });
+    } catch (err) {
+        console.error('프로그램 중단 오류:', err);
+        res.status(500).json({ success: false, message: '서버 오류' });
+    }
+});
+
 // GET /api/revolution/status/:memberId - 현재 상태 조회
 router.get('/status/:memberId', authenticate, async (req, res) => {
     try {

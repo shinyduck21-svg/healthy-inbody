@@ -781,9 +781,31 @@ function getRevolutionPhase(day) {
 }
 
 async function startRevolutionProgram() {
-    if (!confirm('박용우 교수님의 4주 내 몸 혁명을 오늘부터 시작하시겠습니까?')) return;
+    const modal = document.getElementById('startRevModal');
+    const dateInput = document.getElementById('revStartDateInput');
+    if (modal && dateInput) {
+        // 기본값으로 오늘 날짜 설정
+        dateInput.value = new Date().toISOString().split('T')[0];
+        modal.classList.add('active');
+    }
+}
 
-    const startDate = new Date().toISOString().split('T')[0];
+function closeStartRevModal() {
+    const modal = document.getElementById('startRevModal');
+    if (modal) modal.classList.remove('active');
+}
+
+async function submitStartRevolution() {
+    const startDate = document.getElementById('revStartDateInput').value;
+    if (!startDate) {
+        showToast('시작 날짜를 선택해 주세요.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('confirmStartRevBtn');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+
     try {
         const res = await apiFetch('/api/revolution/start', {
             method: 'POST',
@@ -793,10 +815,37 @@ async function startRevolutionProgram() {
         const data = await res.json();
         if (data.success) {
             showToast('혁명이 시작되었습니다! 화이팅!', 'success');
+            closeStartRevModal();
             await loadRevolutionStatus();
+        } else {
+            showToast(data.message || '시작 중 오류가 발생했습니다.', 'error');
         }
     } catch (err) {
         showToast('시작 중 오류가 발생했습니다.', 'error');
+    } finally {
+        btn.innerHTML = '시작하기';
+        btn.disabled = false;
+    }
+}
+
+async function stopRevolutionProgram() {
+    if (!confirm('정말로 내 몸 혁명 프로그램을 중단하시겠습니까?\n프로그램 시작 날짜가 초기화됩니다.')) return;
+
+    try {
+        const res = await apiFetch('/api/revolution/stop', {
+            method: 'POST',
+            body: JSON.stringify({ memberId: MEMBER_ID })
+        });
+        if (!res) return;
+        const data = await res.json();
+        if (data.success) {
+            showToast('프로그램이 중단되었습니다.', 'success');
+            await loadRevolutionStatus();
+        } else {
+            showToast(data.message || '중단 중 오류가 발생했습니다.', 'error');
+        }
+    } catch (err) {
+        showToast('중단 중 오류가 발생했습니다.', 'error');
     }
 }
 

@@ -47,6 +47,8 @@
                     <div class="flex gap-1">
                         <button class="btn btn-secondary btn-sm" onclick="openRevGuideModal()">📖 가이드</button>
                         <button class="btn btn-secondary btn-sm" onclick="openRevReportModal()">📊 리포트</button>
+                        <button class="btn btn-secondary btn-sm" onclick="stopRevolutionProgram()"
+                            style="color:var(--danger); border-color:var(--danger);">🛑 중단</button>
                         <button class="btn btn-primary btn-sm" onclick="openRevMissionModal()">📝 오늘 미션 체크</button>
                     </div>
                 </div>
@@ -85,6 +87,30 @@
                     </div>
                     <button class="btn btn-secondary" onclick="startRevolutionProgram()"
                         style="background:white; color:var(--primary); border:none;">지금 시작하기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== 내 몸 혁명 시작 날짜 선택 모달 ====== -->
+        <div class="modal-overlay" id="startRevModal">
+            <div class="modal" style="max-width:400px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">프로그램 시작하기</h2>
+                    <button class="close-btn" onclick="closeStartRevModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3" style="font-size:0.9rem;">
+                        내 몸 혁명 4주 프로그램을 시작할 날짜를 선택해 주세요.
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label" for="revStartDateInput">시작 일자</label>
+                        <input type="date" id="revStartDateInput" class="form-input" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeStartRevModal()">취소</button>
+                    <button class="btn btn-primary" id="confirmStartRevBtn"
+                        onclick="submitStartRevolution()">시작하기</button>
                 </div>
             </div>
         </div>
