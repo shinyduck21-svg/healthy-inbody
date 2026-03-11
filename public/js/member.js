@@ -1060,8 +1060,19 @@ function renderRevCalendar() {
         const isToday = dateStr === todayStr;
         const hasLog = !!log;
 
+        // 미션 누락 체크 (오늘 포함 이전 날짜 중 시작일 이후인 경우)
+        let isMissed = false;
+        if (revolutionStatus && revolutionStatus.startDate && !hasLog) {
+            if (dateStr >= revolutionStatus.startDate && dateStr <= todayStr) {
+                isMissed = true;
+            }
+        }
+
+        // 시작일 표시 체크
+        const isStartDate = revolutionStatus && revolutionStatus.startDate === dateStr;
+
         html += `
-            <div class="rev-cal-day ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''}" 
+            <div class="rev-cal-day ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''} ${isMissed ? 'missed' : ''} ${isStartDate ? 'start-day' : ''}" 
                  onclick="openRevMissionModal('${dateStr}')">
                 ${d}
                 ${hasLog ? '<div class="rev-cal-dot active"></div>' : ''}

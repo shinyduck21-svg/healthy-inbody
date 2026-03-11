@@ -1621,8 +1621,8 @@ canvas {
 
 .rev-cal-day.today {
   border: 2px solid var(--primary);
-  background: rgba(255, 107, 107, 0.08);
-  box-shadow: 0 0 15px rgba(255, 107, 107, 0.15);
+  background: rgba(99, 102, 241, 0.08); /* var(--primary) 기반 연한 파랑 */
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
 }
 
 .rev-cal-day.today::after {
@@ -1651,6 +1651,27 @@ canvas {
   color: var(--primary);
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
+}
+
+.rev-cal-day.missed {
+  background: rgba(148, 163, 184, 0.15); /* var(--text-muted) 기반 회색 */
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+
+.rev-cal-day.start-day::after {
+  content: 'START';
+  position: absolute;
+  top: -8px;
+  font-size: 0.5rem;
+  background: #ff4d4d;
+  color: white;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 900;
+  z-index: 2;
 }
 
 .rev-cal-dot {

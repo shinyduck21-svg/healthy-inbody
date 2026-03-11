@@ -43,6 +43,52 @@ function closeAccessLogsModal() {
     document.getElementById('accessLogsModal').classList.remove('active');
 }
 
+/**
+ * API 경로와 메소드를 기반으로 한글 설명을 반환
+ */
+function getLogDescription(method, path) {
+    if (path === '/') return '메인 대시보드 접속';
+    if (path === '/login') return '로그인 페이지 접속';
+    if (path === '/signup') return '회원가입 페이지 접속';
+    if (path.startsWith('/member?id=')) return '회원 상세 페이지 조회';
+    if (path.startsWith('/api/auth/login')) return '로그인 시도';
+    if (path.startsWith('/api/auth/change-password')) return '비밀번호 변경';
+    if (path === '/api/user/me') return method === 'GET' ? '내 정보 조회' : '내 정보 수정';
+    if (path === '/api/members') return method === 'GET' ? '회원 목록 조회' : '회원 추가';
+    if (path.match(/^\/api\/members\/\d+$/)) {
+        if (method === 'GET') return '회원 상세 정보 API';
+        if (method === 'PUT') return '회원 정보 수정';
+        if (method === 'DELETE') return '회원 삭제';
+    }
+    if (path.startsWith('/api/inbody/member/')) return method === 'GET' ? '인바디 기록 목록 조회' : '인바디 기록 추가';
+    if (path.match(/^\/api\/inbody\/\d+$/)) {
+        if (method === 'PUT') return '인바디 기록 수정';
+        if (method === 'DELETE') return '인바디 기록 삭제';
+    }
+    if (path.startsWith('/api/revolution/status/')) return '내 몸 혁명 상태 조회';
+    if (path === '/api/revolution/start') return '내 몸 혁명 시작';
+    if (path === '/api/revolution/stop') return '내 몸 혁명 중단';
+    if (path.startsWith('/api/revolution/logs/')) return '내 몸 혁명 기록 조회';
+    if (path === '/api/groups') return method === 'GET' ? '그룹 목록 조회' : '그룹 추가';
+    if (path.match(/^\/api\/groups\/\d+$/)) {
+        if (method === 'PUT') return '그룹 수정';
+        if (method === 'DELETE') return '그룹 삭제';
+    }
+    if (path === '/api/admin/logs') return '접속 로그 조회';
+
+    return path; // 매핑되지 않은 경우 원래 경로 반환
+}
+
+function getMethodBadgeClass(method) {
+    switch (method) {
+        case 'GET': return 'badge-secondary'; // 조회: 회색
+        case 'POST': return 'badge-success';   // 생성: 초록
+        case 'PUT': return 'badge-primary';    // 수정: 파랑
+        case 'DELETE': return 'badge-danger'; // 삭제: 빨강
+        default: return 'badge-secondary';
+    }
+}
+
 async function loadAccessLogs() {
     const tableBody = document.getElementById('accessLogsTableBody');
     tableBody.innerHTML = '<tr><td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);"><span class="spinner"></span> 로그를 불러오는 중...</td></tr>';
@@ -63,14 +109,19 @@ async function loadAccessLogs() {
                 const userDisplay = log.user_name ? `${log.user_name}(${log.user_role})` : (log.user_role === 'admin' ? `관리자(${log.user_id})` : '비회원');
                 const ua = log.user_agent || '-';
                 const shortUA = ua.length > 30 ? ua.substring(0, 30) + '...' : ua;
+                const description = getLogDescription(log.method, log.path);
+                const badgeClass = getMethodBadgeClass(log.method);
 
                 return `
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <td style="padding: 0.8rem 1rem; white-space: nowrap;">${date}</td>
                         <td style="padding: 0.8rem 1rem;">${userDisplay}</td>
                         <td style="padding: 0.8rem 1rem;">${log.ip}</td>
-                        <td style="padding: 0.8rem 1rem;"><span class="badge ${log.method === 'POST' ? 'badge-primary' : 'badge-secondary'}" style="font-size: 0.7rem;">${log.method}</span></td>
-                        <td style="padding: 0.8rem 1rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${log.path}">${log.path}</td>
+                        <td style="padding: 0.8rem 1rem;"><span class="badge ${badgeClass}" style="font-size: 0.7rem;">${log.method}</span></td>
+                        <td style="padding: 0.8rem 1rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${log.path}">
+                            <span style="font-weight: 600;">${description}</span><br>
+                            <span style="font-size: 0.7rem; color: var(--text-muted);">${log.path}</span>
+                        </td>
                         <td style="padding: 0.8rem 1rem; color: var(--text-muted); font-size: 0.8rem;" title="${ua}">${shortUA}</td>
                     </tr>
                 `;
@@ -812,8 +863,19 @@ function renderRevCalendar() {
         const isToday = dateStr === todayStr;
         const hasLog = !!log;
 
+        // 미션 누락 체크 (오늘 포함 이전 날짜 중 시작일 이후인 경우)
+        let isMissed = false;
+        if (revolutionStatus && revolutionStatus.startDate && !hasLog) {
+            if (dateStr >= revolutionStatus.startDate && dateStr <= todayStr) {
+                isMissed = true;
+            }
+        }
+
+        // 시작일 표시 체크
+        const isStartDate = revolutionStatus && revolutionStatus.startDate === dateStr;
+
         html += `
-            <div class="rev-cal-day ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''}" 
+            <div class="rev-cal-day ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''} ${isMissed ? 'missed' : ''} ${isStartDate ? 'start-day' : ''}" 
                  onclick="openRevMissionModal('${dateStr}')">
                 ${d}
                 ${hasLog ? '<div class="rev-cal-dot active"></div>' : ''}
