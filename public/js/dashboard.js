@@ -20,6 +20,14 @@ document.getElementById('adminName').textContent = `${adminEmail} (${userRole ==
 // 관리자 전용 버튼 표시
 if (userRole === 'admin') {
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
+
+    // 특정 계정(admin)인 경우 접속 로그 버튼 숨김
+    // admin 혹은 admin@mongfit.com 모두 체크
+    const lowEmail = adminEmail ? adminEmail.toLowerCase().trim() : '';
+    if (lowEmail === 'admin' || lowEmail === 'admin@mongfit.com') {
+        const logBtn = document.getElementById('viewAccessLogsBtn');
+        if (logBtn) logBtn.style.display = 'none';
+    }
 }
 
 let allMembers = [];
@@ -364,6 +372,9 @@ async function openMyProfileModal() {
         document.getElementById('myPhone').value = user.phone || '';
     }
 
+    document.getElementById('myCurrentPassword').value = '';
+    document.getElementById('myNewPassword').value = '';
+    document.getElementById('myConfirmNewPassword').value = '';
     document.getElementById('myProfileModal').classList.add('active');
 }
 
@@ -373,34 +384,57 @@ function closeMyProfileModal() {
 
 async function saveMyProfile() {
     const role = localStorage.getItem('mongfit_role');
-    const id = localStorage.getItem('mongfit_user_id');
     const name = document.getElementById('myName').value.trim();
     if (!name) { showToast('이름을 입력해 주세요.', 'error'); return; }
 
-    const body = { name };
-    if (role !== 'admin') {
-        body.gender = document.getElementById('myGender').value || null;
-        body.age = document.getElementById('myAge').value || null;
-        body.phone = document.getElementById('myPhone').value.trim() || null;
-    }
+    const curPwd = document.getElementById('myCurrentPassword').value;
+    const newPwd = document.getElementById('myNewPassword').value;
+    const confPwd = document.getElementById('myConfirmNewPassword').value;
 
     const saveBtn = document.getElementById('saveMyProfileBtn');
     saveBtn.innerHTML = '<span class="spinner"></span>';
     saveBtn.disabled = true;
 
     try {
+        // 1. 비밀번호 변경 시도 (입력된 경우에만)
+        if (curPwd || newPwd || confPwd) {
+            if (!curPwd || !newPwd) {
+                showToast('현재 비밀번호와 새 비밀번호를 모두 입력해 주세요.', 'error');
+                return;
+            }
+            if (newPwd !== confPwd) {
+                showToast('새 비밀번호가 일치하지 않습니다.', 'error');
+                return;
+            }
+
+            const pwdRes = await apiFetch('/api/auth/change-password', {
+                method: 'POST',
+                body: JSON.stringify({ currentPassword: curPwd, newPassword: newPwd })
+            });
+            if (!pwdRes) return;
+            const pwdData = await pwdRes.json();
+            if (!pwdData.success) {
+                showToast(pwdData.message, 'error');
+                return;
+            }
+        }
+
+        // 2. 다른 프로필 정보 변경
+        const body = { name };
+        if (role !== 'admin') {
+            body.gender = document.getElementById('myGender').value || null;
+            body.age = document.getElementById('myAge').value || null;
+            body.phone = document.getElementById('myPhone').value.trim() || null;
+        }
+
         const res = await apiFetch('/api/user/me', { method: 'PUT', body: JSON.stringify(body) });
         if (!res) return;
         const data = await res.json();
 
         if (data.success) {
-            showToast('내 정보가 수정되었습니다.', 'success');
+            showToast('정보가 성공적으로 수정되었습니다.', 'success');
             closeMyProfileModal();
-            // 관리자 이름 표시 업데이트
-            if (role === 'admin') {
-                document.getElementById('adminName').textContent = `${user.email} (관리자)`;
-            }
-            location.reload(); // 간단하게 페이지 갱신
+            setTimeout(() => location.reload(), 500);
         } else {
             showToast(data.message, 'error');
         }
@@ -412,59 +446,6 @@ async function saveMyProfile() {
     }
 }
 
-// ===== 비밀번호 변경 로직 =====
-function openChangePasswordModal() {
-    // 기존 입력 초기화
-    document.getElementById('currentPassword').value = '';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('confirmNewPassword').value = '';
-    document.getElementById('changePasswordModal').classList.add('active');
-}
-
-function closeChangePasswordModal() {
-    document.getElementById('changePasswordModal').classList.remove('active');
-}
-
-async function changePassword() {
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-
-    if (!currentPassword || !newPassword) {
-        showToast('비밀번호를 입력해 주세요.', 'error');
-        return;
-    }
-    if (newPassword !== confirmNewPassword) {
-        showToast('새 비밀번호가 일치하지 않습니다.', 'error');
-        return;
-    }
-
-    const btn = document.getElementById('changePasswordBtn');
-    btn.innerHTML = '<span class="spinner"></span>';
-    btn.disabled = true;
-
-    try {
-        const res = await apiFetch('/api/auth/change-password', {
-            method: 'POST',
-            body: JSON.stringify({ currentPassword, newPassword })
-        });
-        if (!res) return;
-        const data = await res.json();
-
-        if (data.success) {
-            showToast('비밀번호가 성공적으로 변경되었습니다.', 'success');
-            closeChangePasswordModal();
-            closeMyProfileModal();
-        } else {
-            showToast(data.message, 'error');
-        }
-    } catch (err) {
-        showToast('비밀번호 변경 중 오류가 발생했습니다.', 'error');
-    } finally {
-        btn.innerHTML = '비밀번호 변경';
-        btn.disabled = false;
-    }
-}
 
 // ===== 내 몸 혁명 (Revolution) 로직 =====
 
