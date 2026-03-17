@@ -72,7 +72,7 @@ async function initDB() {
         UNIQUE(member_id, measured_at)
       );
 
-      -- 내 몸 혁명 로그 테이블
+      -- 마이옵티멀 로그 테이블
       CREATE TABLE IF NOT EXISTS revolution_logs (
         id SERIAL PRIMARY KEY,
         member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,

@@ -40,7 +40,7 @@
                     <div class="flex gap-2" style="align-items:center;">
                         <div class="revolution-badge">DAY <span id="revDayCount">1</span></div>
                         <div>
-                            <h2 class="revolution-title" id="revPhaseTitle">1단계: 체내 지방 차단 (비움)</h2>
+                            <h2 class="revolution-title" id="revPhaseTitle">1단계: 지방 대사 활성화 (비움)</h2>
                             <p class="revolution-subtitle" id="revPhaseDesc">정제 탄수화물을 끊고 몸을 가볍게 만듭니다.</p>
                         </div>
                     </div>
@@ -82,7 +82,7 @@
             <div class="card" style="background:var(--gradient-primary); border:none; color:white; padding:1.5rem;">
                 <div class="flex-between">
                     <div>
-                        <h2 style="font-weight:800; margin-bottom:0.25rem;">🚀 내 몸 혁명 4주 프로그램</h2>
+                        <h2 style="font-weight:800; margin-bottom:0.25rem;">🚀 마이옵티멀 4주 프로그램</h2>
                         <p style="opacity:0.9; font-size:0.95rem;">박용우 교수님의 4주 신진대사 리셋 프로젝트에 참여해 보세요.</p>
                     </div>
                     <button class="btn btn-secondary" onclick="startRevolutionProgram()"
@@ -100,7 +100,7 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted mb-3" style="font-size:0.9rem;">
-                        내 몸 혁명 4주 프로그램을 시작할 날짜를 선택해 주세요.
+                        마이옵티멀 4주 프로그램을 시작할 날짜를 선택해 주세요.
                     </p>
                     <div class="form-group">
                         <label class="form-label" for="revStartDateInput">시작 일자</label>
@@ -322,7 +322,8 @@
                 </div>
 
                 <div class="divider mt-3"></div>
-                <div class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">비밀번호 변경 (주기적인 변경을 권장합니다)</div>
+                <div class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">비밀번호 변경 (주기적인 변경을 권장합니다)
+                </div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">현재 비밀번호</label>
@@ -372,7 +373,7 @@
                     </div>
                 </div>
 
-                <div class="mission-item">
+                <div class="mission-item" id="revFastingRow">
                     <div class="flex-between">
                         <span>⏳ 간헐적 단식 시간 (권장: <span id="targetFasting">14</span>시간+)</span>
                         <div class="flex gap-1" style="align-items:center;">
@@ -420,7 +421,7 @@
     <div class="modal-overlay" id="revReportModal">
         <div class="modal" style="max-width:500px;">
             <div class="modal-header">
-                <h2 class="modal-title">내 몸 혁명 성취 리포트</h2>
+                <h2 class="modal-title">몽핏 리포트</h2>
                 <button class="close-btn" onclick="closeRevReportModal()">✕</button>
             </div>
             <div class="modal-body">
@@ -467,7 +468,7 @@
 
                 <!-- 최근 기록 리스트 -->
                 <div style="border-top:1px solid var(--glass-border); padding-top:1rem;">
-                    <h3 style="font-size:0.9rem; margin-bottom:0.75rem;">최근 혁명 기록 (7일)</h3>
+                    <h3 style="font-size:0.9rem; margin-bottom:0.75rem;">최근 마이옵티멀 기록 (7일)</h3>
                     <div id="repLogList" style="max-height:200px; overflow-y:auto; font-size:0.85rem;">
                         <!-- JS에서 렌더링 -->
                     </div>
@@ -483,7 +484,7 @@
     <div class="modal-overlay" id="revGuideModal">
         <div class="modal" style="max-width:550px;">
             <div class="modal-header">
-                <h2 class="modal-title">내 몸 혁명 가이드북</h2>
+                <h2 class="modal-title">마이옵티멀 가이드북</h2>
                 <button class="close-btn" onclick="closeRevGuideModal()">✕</button>
             </div>
             <div class="modal-body" style="padding:0;">
@@ -515,7 +516,7 @@
                         </div>
 
                         <div class="alert alert-info mt-3" style="font-size:0.85rem;">
-                            💡 <strong>Tip:</strong> 1주차(Day 1-3)는 단백질 셰이크만 4번! 커피는 블랙으로 하루 한 잔까지만 허용됩니다.
+                            💡 <strong>Tip:</strong> 1주차(Day 1-3)는 단백질 셰이크만 4번!
                         </div>
                     </div>
                 </div>

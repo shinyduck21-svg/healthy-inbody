@@ -65,10 +65,10 @@ function getLogDescription(method, path) {
         if (method === 'PUT') return '인바디 기록 수정';
         if (method === 'DELETE') return '인바디 기록 삭제';
     }
-    if (path.startsWith('/api/revolution/status/')) return '내 몸 혁명 상태 조회';
-    if (path === '/api/revolution/start') return '내 몸 혁명 시작';
-    if (path === '/api/revolution/stop') return '내 몸 혁명 중단';
-    if (path.startsWith('/api/revolution/logs/')) return '내 몸 혁명 기록 조회';
+    if (path.startsWith('/api/revolution/status/')) return '마이옵티멀 상태 조회';
+    if (path === '/api/revolution/start') return '마이옵티멀 시작';
+    if (path === '/api/revolution/stop') return '마이옵티멀 중단';
+    if (path.startsWith('/api/revolution/logs/')) return '마이옵티멀 기록 조회';
     if (path === '/api/groups') return method === 'GET' ? '그룹 목록 조회' : '그룹 추가';
     if (path.match(/^\/api\/groups\/\d+$/)) {
         if (method === 'PUT') return '그룹 수정';
@@ -555,11 +555,11 @@ function updateRevolutionUI() {
 }
 
 function getRevolutionPhase(day) {
-    if (day <= 3) return { title: '1단계: 체내 지방 차단 (비움)', desc: '3일간 단백질 셰이크만 4번 섭취하여 대사를 초기화합니다.' };
+    if (day <= 3) return { title: '1단계: 지방 대사 활성화 (비움)', desc: '체내 에너지원으로 지방을 효율적으로 사용합니다.' };
     if (day <= 7) return { title: '2단계: 가속기 가동 (충전)', desc: '점심 한 끼는 일반식(탄수화물 제한)을 즐기세요.' };
     if (day <= 21) return { title: '3단계: 지방 연로 가동 (리셋)', desc: '본격적인 체지방 연소 단계! 주 1회 24시간 단식이 포함됩니다.' };
     if (day <= 28) return { title: '4단계: 세트포인트 안착 (유지)', desc: '안정적인 체중 유지 능력을 길러 요요를 방지합니다.' };
-    return { title: '프로그램 완료!', desc: '4주간의 혁명을 성공적으로 마쳤습니다! 고생하셨습니다.' };
+    return { title: '프로그램 완료!', desc: '4주간의 도전을 성공적으로 마쳤습니다! 고생하셨습니다.' };
 }
 
 async function startRevolutionProgram() {
@@ -596,7 +596,7 @@ async function submitStartRevolution() {
         if (!res) return;
         const data = await res.json();
         if (data.success) {
-            showToast('혁명이 시작되었습니다! 화이팅!', 'success');
+            showToast('마이옵티멀 프로그램이 시작되었습니다! 화이팅!', 'success');
             closeStartRevModal();
             await loadRevolutionStatus();
         } else {
@@ -611,7 +611,7 @@ async function submitStartRevolution() {
 }
 
 async function stopRevolutionProgram() {
-    if (!confirm('정말로 내 몸 혁명 프로그램을 중단하시겠습니까?\n프로그램 시작 날짜가 초기화됩니다.')) return;
+    if (!confirm('정말로 마이옵티멀 프로그램을 중단하시겠습니까?\n프로그램 시작 날짜가 초기화됩니다.')) return;
 
     try {
         const res = await apiFetch('/api/revolution/stop', {
@@ -674,7 +674,15 @@ async function openRevMissionModal(targetDateStr) {
 
     setTxt('targetShake', target);
     setTxt('targetProtein', proteinTarget);
-    setTxt('targetFasting', fastingTarget);
+    const fastingRow = document.getElementById('revFastingRow');
+    if (fastingRow) {
+        if (diffDays < 8) {
+            fastingRow.style.display = 'none';
+        } else {
+            fastingRow.style.display = 'block';
+            setTxt('targetFasting', fastingTarget);
+        }
+    }
     setTxt('currentShake', currentShakeCount);
     setVal('missFasting', log.fasting_hours || '');
     setChk('missHiit', log.hiit_done);
