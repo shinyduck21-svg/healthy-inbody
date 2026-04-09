@@ -42,6 +42,10 @@ app.use((req, res, next) => {
 
 app.use(accessLogger);
 
+app.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/inbody', inbodyRoutes);
