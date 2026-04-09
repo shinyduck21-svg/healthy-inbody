@@ -1375,13 +1375,12 @@ async function addMenstruationDate() {
         return;
     }
 
-    // 수정 시 컨펌 메시지 추가
-    if (editingMenstruationId) {
-        if (!confirm('기록을 수정하시겠습니까?')) return;
-    }
+    // 저장 시 컨펌 메시지 (추가/수정 공통)
+    const confirmMsg = editingMenstruationId ? '기록을 수정하시겠습니까?' : '새 월경 기록을 저장하시겠습니까?';
+    if (!confirm(confirmMsg)) return;
 
     const btn = event.target;
-    let originalText = '저장';
+    let originalText = editingMenstruationId ? '수정' : '저장';
     if (btn) {
         originalText = btn.textContent;
         btn.innerHTML = '<span class="spinner"></span>';
@@ -1401,18 +1400,9 @@ async function addMenstruationDate() {
         if (data.success) {
             showToast(editingMenstruationId ? '기록이 수정되었습니다.' : '기록이 추가되었습니다.', 'success');
             
-            if (editingMenstruationId) {
-                // 수정 시에는 팝업 닫고 새로고침
-                closeMenstruationModal();
-                setTimeout(() => location.reload(), 500);
-            } else {
-                // 추가 시에는 기존처럼 즉시 반영
-                cancelEditMenstruation();
-                if (data.data) {
-                    updateMenstruationData(data.data);
-                }
-                loadMember();
-            }
+            // 팝업 닫고 새로고침 (일관된 UX를 위해 추가/수정 모두 동일 적용)
+            closeMenstruationModal();
+            setTimeout(() => location.reload(), 500);
         } else {
             showToast(data.message, 'error');
         }
