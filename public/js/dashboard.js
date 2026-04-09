@@ -240,7 +240,10 @@ function renderMembers(members) {
           <div class="flex gap-1" style="align-items:center;">
             <div class="member-avatar ${avatarClass}">${initial}</div>
             <div>
-              <div class="member-name">${m.name}${groupTag}</div>
+              <div class="member-name">
+                ${m.name}${groupTag}
+                ${(m.gender === 'F' && m.last_period_start) ? getPeriodIcon(m.last_period_start, m.last_period_end) : ''}
+              </div>
               <div class="member-info">${genderLabel} · ${age} · ${m.phone || '연락처 없음'}</div>
             </div>
           </div>
@@ -264,6 +267,41 @@ function renderMembers(members) {
     }).join('');
 }
 
+
+// ===== 월경 관련 유틸리티 =====
+function getPeriodIcon(lastStart, lastEnd) {
+    if (!lastStart) return '';
+    const start = new Date(lastStart);
+    const end = lastEnd ? new Date(lastEnd) : null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
+    if (end) end.setHours(0, 0, 0, 0);
+
+    // 오늘이 시작일~종료일 사이에 있는지 확인
+    if (today >= start) {
+        if (end && today <= end) {
+            return `<span title="현재 월경 기간" style="cursor:help; margin-left:3px;">🩸</span>`;
+        } else if (!end) {
+            // 종료일이 없으면 시작일로부터 7일 이내인지 확인
+            const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 0 && diffDays <= 7) {
+                return `<span title="현재 월경 기간(진행 중)" style="cursor:help; margin-left:3px;">🩸</span>`;
+            }
+        }
+    }
+
+    // 다음 예정일(시작일 + 28일) 기준 3일 전부터 표시
+    const nextStart = new Date(start);
+    nextStart.setDate(start.getDate() + 28);
+    const daysToNext = Math.floor((nextStart - today) / (1000 * 60 * 60 * 24));
+
+    if (daysToNext >= 0 && daysToNext <= 3) {
+        return `<span title="월경 주간 시작 예정(D-${daysToNext})" style="cursor:help; margin-left:3px; opacity:0.7;">📅</span>`;
+    }
+
+    return '';
+}
 
 function goToMember(id) {
     window.location.href = `/member?id=${id}`;

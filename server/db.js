@@ -106,6 +106,22 @@ async function initDB() {
         user_agent TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
+
+      -- 월경 기록 히스토리 테이블 추가
+      CREATE TABLE IF NOT EXISTS menstruation_history (
+        id SERIAL PRIMARY KEY,
+        member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+        start_date TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(member_id, start_date)
+      );
+
+      -- menstruation_history 테이블 스키마 보정 (end_date 추가)
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='menstruation_history' AND column_name='end_date') THEN
+          ALTER TABLE menstruation_history ADD COLUMN end_date TEXT;
+        END IF;
+      END $$;
     `);
 
     // 기본 관리자 계정 생성

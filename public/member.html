@@ -156,11 +156,33 @@
                     <div class="info-label">메모</div>
                     <div class="info-value" id="infoMemo" style="font-weight:400; color:var(--text-secondary);">-</div>
                 </div>
+        </div>
+    </div>
+
+    <!-- 월경 주기 관리 (여성 회원 전용) -->
+    <div class="card mb-3" id="menstruationCard" style="display:none;">
+        <div class="flex-between mb-2">
+            <div class="section-title" style="margin:0;">🩸 월경 주기 관리</div>
+            <button class="btn btn-secondary btn-sm" onclick="openMenstruationModal()">📅 기록 관리</button>
+        </div>
+        <div id="menstruationSummary" class="info-grid">
+            <div class="info-item">
+                <div class="info-label">최근 시작일</div>
+                <div class="info-value" id="lastPeriodDate">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">다음 예정일 (예측)</div>
+                <div class="info-value" id="nextPeriodDate">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">평균 주기</div>
+                <div class="info-value" id="avgCycleLength">-</div>
             </div>
         </div>
+    </div>
 
-        <!-- 대시보드 요약 및 방사형 밸런스 차트 -->
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:1rem;" class="mb-3">
+    <!-- 대시보드 요약 및 방사형 밸런스 차트 -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:1rem;" class="mb-3">
             <!-- 최신 인바디 요약 -->
             <div class="card" id="latestInbodyCard" style="display:none; height:100%;">
                 <div class="section-title">최근 측정 결과</div>
@@ -482,6 +504,16 @@
                     </label>
                 </div>
 
+                <div class="mission-item" id="revPeriodMissionRow" style="display:none; background: rgba(255,107,129,0.05); border: 1px dashed rgba(255,107,129,0.3);">
+                    <div class="flex-between">
+                        <span style="color:var(--error); font-weight:600;">🩸 월경 기간 체크</span>
+                        <div class="flex gap-1" style="align-items:center;">
+                            <span id="revPeriodStatusText" style="font-size:0.85rem; color:var(--text-muted);">진행 중 아님</span>
+                            <button class="btn btn-icon btn-sm" onclick="openMenstruationModal()" title="관리">⚙️</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group mt-2">
                     <label class="form-label">☀️ 아침긍정확언/컨디션 체크</label>
                     <textarea class="form-textarea" id="revNotes" placeholder="오늘 느낀 몸의 변화나 메모를 남겨보세요."></textarea>
@@ -629,6 +661,43 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeRevGuideModal()">알겠습니다</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 월경 기록 관리 모달 -->
+    <div class="modal-overlay" id="menstruationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">월경 주기 이력 관리</h2>
+                <button class="close-btn" onclick="closeMenstruationModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label class="form-label">기록 추가/수정</label>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">시작일</label>
+                            <input type="date" id="newPeriodStartDate" class="form-input" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">종료일 (선택)</label>
+                            <input type="date" id="newPeriodEndDate" class="form-input" />
+                        </div>
+                    </div>
+                    <div class="flex gap-1 mt-2">
+                        <button class="btn btn-primary" onclick="addMenstruationDate()">저장</button>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+                <div class="section-title">최근 기록 (최대 12개월)</div>
+                <div id="menstruationLogList" style="max-height: 300px; overflow-y: auto;">
+                    <!-- JS에서 렌더링 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeMenstruationModal()">닫기</button>
             </div>
         </div>
     </div>

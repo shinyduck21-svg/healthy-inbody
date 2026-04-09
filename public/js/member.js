@@ -31,10 +31,18 @@ let revolutionStatus = null;
 let revolutionLogs = [];
 let allGroups = [];
 let currentCalDate = new Date(); // 달력용 현재 날짜 추가
+let menstruationHistory = []; // 월경 이력 데이터
+let editingMenstruationId = null; // 현재 수정 중인 월경 기록 ID
 
 // ===== 초기화 =====
 async function init() {
-    await Promise.all([loadMember(), loadRecords(), loadRevolutionStatus(), loadGroups()]);
+    await Promise.all([
+        loadMember(),
+        loadRecords(),
+        loadRevolutionStatus(),
+        loadGroups(),
+        loadMenstruationHistory()
+    ]);
 }
 
 // ===== 회원 정보 로드 =====
@@ -72,6 +80,9 @@ function renderMemberInfo(m) {
     document.getElementById('infoPhone').textContent = m.phone || '-';
     document.getElementById('infoGroup').textContent = m.group_name || '그룹 없음';
     document.getElementById('infoMemo').textContent = m.memo || '메모 없음';
+
+    // 월경 UI 렌더링 호출 (데이터 로드 순서 대응)
+    renderMenstruationUI();
 }
 
 // ===== 인바디 기록 로드 =====
@@ -885,6 +896,36 @@ async function openRevMissionModal(targetDateStr) {
     setChk('missNoAlcohol', log.no_alcohol !== false);
     setVal('revNotes', log.notes || '');
 
+    // 월경 상태 체크 (여성 회원 전용)
+    const periodRow = document.getElementById('revPeriodMissionRow');
+    const periodStatus = document.getElementById('revPeriodStatusText');
+    if (periodRow && memberData && memberData.gender === 'F') {
+        periodRow.style.display = 'block';
+        
+        let isDuring = false;
+        menstruationHistory.forEach(h => {
+            if (dateStr >= h.start_date) {
+                if (h.end_date && dateStr <= h.end_date) isDuring = true;
+                else if (!h.end_date) {
+                    const start = new Date(h.start_date);
+                    const current = new Date(dateStr);
+                    const diff = (current - start) / (1000 * 60 * 60 * 24);
+                    if (diff >= 0 && diff < 7) isDuring = true;
+                }
+            }
+        });
+        
+        if (isDuring) {
+            periodStatus.textContent = '월경 기간 중 🩸';
+            periodStatus.style.color = 'var(--error)';
+        } else {
+            periodStatus.textContent = '진행 중 아님';
+            periodStatus.style.color = 'var(--text-muted)';
+        }
+    } else if (periodRow) {
+        periodRow.style.display = 'none';
+    }
+
     const modal = document.getElementById('revMissionModal');
     if (modal) modal.classList.add('active');
 }
@@ -1079,10 +1120,32 @@ function renderRevCalendar() {
         // 시작일 표시 체크
         const isStartDate = revolutionStatus && revolutionStatus.startDate === dateStr;
 
+        // 월경 관련 체크
+        let isPeriodDay = false;
+        menstruationHistory.forEach(h => {
+            const startStr = h.start_date;
+            const endStr = h.end_date;
+            if (dateStr >= startStr) {
+                if (endStr && dateStr <= endStr) isPeriodDay = true;
+                else if (!endStr) {
+                    // 종료일이 없는 경우, 오늘이 시작일 이후 7일 이내면 표시
+                    const start = new Date(startStr);
+                    const current = new Date(dateStr);
+                    const diff = Math.round((current - start) / (1000 * 60 * 60 * 24));
+                    if (diff >= 0 && diff < 7) isPeriodDay = true;
+                }
+            }
+        });
+
+        const { nextDate } = calculateNextPeriod();
+        const isPredictedDate = nextDate && (nextDate.toISOString().split('T')[0] === dateStr);
+
         html += `
             <div class="rev-cal-day ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''} ${isMissed ? 'missed' : ''} ${isStartDate ? 'start-day' : ''}" 
                  onclick="openRevMissionModal('${dateStr}')">
                 ${d}
+                ${isPeriodDay ? '<div class="period-dot" title="월경 기간">🩸</div>' : ''}
+                ${isPredictedDate ? '<div class="period-dot predicted" title="월경 예정일">📅</div>' : ''}
                 ${hasLog ? '<div class="rev-cal-dot active"></div>' : ''}
             </div>
         `;
@@ -1117,6 +1180,282 @@ function renderGroupSelect(elementId, selectedId) {
     if (!select) return;
     select.innerHTML = '<option value="">그룹 없음</option>' +
         allGroups.map(g => `<option value="${g.id}" ${g.id == selectedId ? 'selected' : ''}>${g.name}</option>`).join('');
+}
+
+// ===== 월경(Period) 관리 로직 =====
+
+async function loadMenstruationHistory() {
+    try {
+        const res = await apiFetch(`/api/menstruation/${MEMBER_ID}`);
+        if (!res) return;
+        const data = await res.json();
+        if (data.success) {
+            updateMenstruationData(data.data);
+        }
+    } catch (err) {
+        console.error('월경 이력 로드 실패:', err);
+    }
+}
+
+/**
+ * 월경 데이터 전역 상태 업데이트 및 모든 관련 UI 렌더링
+ */
+function updateMenstruationData(data) {
+    menstruationHistory = data || [];
+    console.log('Menstruation State Updated:', menstruationHistory.length, 'records');
+    renderMenstruationUI();
+    renderRevCalendar();
+}
+
+function renderMenstruationUI() {
+    const card = document.getElementById('menstruationCard');
+    const lastDateEl = document.getElementById('lastPeriodDate');
+    const nextDateEl = document.getElementById('nextPeriodDate');
+    const avgCycleEl = document.getElementById('avgCycleLength');
+
+    if (!memberData || (memberData.gender !== 'F' && memberData.gender !== '여성')) {
+        if (card) card.style.display = 'none';
+        return;
+    }
+
+    if (card) card.style.display = 'block';
+
+    if (menstruationHistory.length === 0) {
+        lastDateEl.textContent = '-';
+        nextDateEl.textContent = '-';
+        avgCycleEl.textContent = '-';
+        renderMenstruationModalList();
+        return;
+    }
+
+    if (menstruationHistory && menstruationHistory.length > 0) {
+        const latest = menstruationHistory[0];
+        const latestStr = latest.end_date ? `${formatDate(latest.start_date)} ~ ${formatDate(latest.end_date)}` : `${formatDate(latest.start_date)} (진행 중)`;
+        if (lastDateEl) lastDateEl.textContent = latestStr;
+
+        // 주기 및 예정일 계산
+        const { nextDate, avgCycle, avgDuration } = calculateNextPeriod();
+        if (nextDateEl) nextDateEl.textContent = nextDate ? formatDate(nextDate) : '-';
+        
+        let cycleInfo = avgCycle ? `${avgCycle}일` : (menstruationHistory.length === 1 ? '데이터 부족' : '-');
+        if (avgDuration) cycleInfo += ` (평균 ${avgDuration}일 지속)`;
+        if (avgCycleEl) avgCycleEl.textContent = cycleInfo;
+    } else {
+        if (lastDateEl) lastDateEl.textContent = '-';
+        if (nextDateEl) nextDateEl.textContent = '-';
+        if (avgCycleEl) avgCycleEl.textContent = '-';
+    }
+
+    renderMenstruationModalList();
+}
+
+function calculateNextPeriod() {
+    if (menstruationHistory.length === 0) return { nextDate: null, avgCycle: null, avgDuration: null };
+
+    const sorted = [...menstruationHistory].sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+    const latestDate = new Date(sorted[sorted.length - 1].start_date);
+
+    // 평균 월경 기간 계산 (duration)
+    let totalDuration = 0;
+    let durationCount = 0;
+    sorted.forEach(h => {
+        if (h.start_date && h.end_date) {
+            const d1 = new Date(h.start_date);
+            const d2 = new Date(h.end_date);
+            totalDuration += Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+            durationCount++;
+        }
+    });
+    const avgDuration = durationCount > 0 ? Math.round(totalDuration / durationCount) : null;
+
+    if (sorted.length < 2) {
+        const next = new Date(latestDate);
+        next.setDate(latestDate.getDate() + 28);
+        return { nextDate: next, avgCycle: null, avgDuration };
+    }
+
+    let totalDays = 0;
+    for (let i = 1; i < sorted.length; i++) {
+        const d1 = new Date(sorted[i - 1].start_date);
+        const d2 = new Date(sorted[i].start_date);
+        totalDays += Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+    }
+
+    const avgCycle = Math.round(totalDays / (sorted.length - 1));
+    const next = new Date(latestDate);
+    next.setDate(latestDate.getDate() + avgCycle);
+
+    return { nextDate: next, avgCycle, avgDuration };
+}
+
+function renderMenstruationModalList() {
+    const list = document.getElementById('menstruationLogList');
+    if (!list) return;
+
+    if (menstruationHistory.length === 0) {
+        list.innerHTML = '<div class="text-muted p-3 text-center">기록된 이력이 없습니다.</div>';
+        return;
+    }
+
+    list.innerHTML = menstruationHistory.map(log => {
+        let durationText = '';
+        if (log.start_date && log.end_date) {
+            const d1 = new Date(log.start_date);
+            const d2 = new Date(log.end_date);
+            const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+            durationText = `<span style="font-size:0.8rem; color:var(--text-muted); margin-left:5px;">(${diff}일간)</span>`;
+        }
+        
+        const dateRange = log.end_date ? `${formatDate(log.start_date)} ~ ${formatDate(log.end_date)}` : `${formatDate(log.start_date)} (진행 중)`;
+
+        return `
+            <div class="flex-between p-2 menstruation-item" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div>
+                    <span style="font-weight:600;">${dateRange}</span>
+                    ${durationText}
+                </div>
+                <div class="flex gap-1">
+                    <button class="btn btn-icon btn-sm" onclick="startEditMenstruation(${log.id}, '${log.start_date}', '${log.end_date || ''}')" title="수정">✏️</button>
+                    <button class="btn btn-icon btn-sm" onclick="deleteMenstruationLog(${log.id})" title="삭제">🗑️</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    console.log('Menstruation List Rendered:', menstruationHistory.length, 'items');
+}
+
+function startEditMenstruation(id, start, end) {
+    editingMenstruationId = id;
+    document.getElementById('newPeriodStartDate').value = start;
+    document.getElementById('newPeriodEndDate').value = end || '';
+    const addBtn = document.querySelector('#menstruationModal .btn-primary');
+    if (addBtn) addBtn.textContent = '수정';
+    
+    if (!document.getElementById('cancelEditPeriodBtn')) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.id = 'cancelEditPeriodBtn';
+        cancelBtn.className = 'btn btn-secondary';
+        cancelBtn.textContent = '취소';
+        cancelBtn.onclick = cancelEditMenstruation;
+        addBtn.parentNode.appendChild(cancelBtn);
+    }
+}
+
+function cancelEditMenstruation() {
+    editingMenstruationId = null;
+    document.getElementById('newPeriodStartDate').value = '';
+    document.getElementById('newPeriodEndDate').value = '';
+    const addBtn = document.querySelector('#menstruationModal .btn-primary');
+    if (addBtn) addBtn.textContent = '추가';
+    
+    const cancelBtn = document.getElementById('cancelEditPeriodBtn');
+    if (cancelBtn) cancelBtn.remove();
+}
+
+function openMenstruationModal() {
+    cancelEditMenstruation(); // 모달 열 때 상태 초기화
+    renderMenstruationModalList(); // 최신 이력 렌더링 강제 실행
+    const modal = document.getElementById('menstruationModal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeMenstruationModal() {
+    cancelEditMenstruation();
+    const modal = document.getElementById('menstruationModal');
+    if (modal) modal.classList.remove('active');
+}
+
+async function addMenstruationDate() {
+    const start_date = document.getElementById('newPeriodStartDate').value;
+    const end_date = document.getElementById('newPeriodEndDate').value;
+    
+    if (!start_date) {
+        showToast('시작일을 선택해 주세요.', 'error');
+        return;
+    }
+
+    // 수정 시 컨펌 메시지 추가
+    if (editingMenstruationId) {
+        if (!confirm('기록을 수정하시겠습니까?')) return;
+    }
+
+    const btn = event.target;
+    let originalText = '저장';
+    if (btn) {
+        originalText = btn.textContent;
+        btn.innerHTML = '<span class="spinner"></span>';
+        btn.disabled = true;
+    }
+
+    try {
+        const url = editingMenstruationId ? `/api/menstruation/${editingMenstruationId}` : `/api/menstruation/${MEMBER_ID}`;
+        const method = editingMenstruationId ? 'PUT' : 'POST';
+        
+        const res = await apiFetch(url, {
+            method,
+            body: JSON.stringify({ start_date, end_date })
+        });
+        if (!res) return;
+        const data = await res.json();
+        if (data.success) {
+            showToast(editingMenstruationId ? '기록이 수정되었습니다.' : '기록이 추가되었습니다.', 'success');
+            
+            if (editingMenstruationId) {
+                // 수정 시에는 팝업 닫고 새로고침
+                closeMenstruationModal();
+                setTimeout(() => location.reload(), 500);
+            } else {
+                // 추가 시에는 기존처럼 즉시 반영
+                cancelEditMenstruation();
+                if (data.data) {
+                    updateMenstruationData(data.data);
+                }
+                loadMember();
+            }
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        console.error('Save error:', err);
+        showToast('저장 중 오류가 발생했습니다.', 'error');
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+}
+
+async function deleteMenstruationLog(id) {
+    if (!confirm('이 월경 기록을 삭제하시겠습니까?')) return;
+
+    const btn = event.target; // 클릭된 버튼 (또는 상위 요소)
+    const originalText = btn.textContent;
+    btn.disabled = true;
+
+    try {
+        console.log('Attempting to delete menstruation log:', id);
+        const res = await apiFetch(`/api/menstruation/${id}`, { method: 'DELETE' });
+        if (!res) return;
+        
+        const data = await res.json();
+        if (data.success) {
+            showToast('기록이 삭제되었습니다.', 'success');
+            // 서버에서 내려준 최신 목록으로 즉시 UI 갱신
+            if (data.data) {
+                updateMenstruationData(data.data);
+            }
+            loadMember(); // 헤더 동기화
+        } else {
+            showToast(data.message || '삭제에 실패했습니다.', 'error');
+        }
+    } catch (err) {
+        console.error('Delete error:', err);
+        showToast('삭제 중 서버 오류가 발생했습니다.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
 }
 
 init();

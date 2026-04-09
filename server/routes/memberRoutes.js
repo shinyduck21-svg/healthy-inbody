@@ -13,7 +13,9 @@ router.get('/', async (req, res) => {
         }
         const { search, group_id } = req.query;
         let query = `
-            SELECT m.*, g.name as group_name, COUNT(ir.id) as record_count, MAX(ir.measured_at) as last_measured
+            SELECT m.*, g.name as group_name, COUNT(ir.id) as record_count, MAX(ir.measured_at) as last_measured,
+            (SELECT mh.start_date FROM menstruation_history mh WHERE mh.member_id = m.id ORDER BY mh.start_date DESC LIMIT 1) as last_period_start,
+            (SELECT mh.end_date FROM menstruation_history mh WHERE mh.member_id = m.id ORDER BY mh.start_date DESC LIMIT 1) as last_period_end
             FROM members m
             LEFT JOIN member_groups g ON m.group_id = g.id
             LEFT JOIN inbody_records ir ON m.id = ir.member_id

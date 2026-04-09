@@ -11,6 +11,7 @@ const userRoutes = require('./routes/userRoutes');
 const revolutionRoutes = require('./routes/revolutionRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const menstruationRoutes = require('./routes/menstruationRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,6 +54,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/revolution', revolutionRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/menstruation', menstruationRoutes);
 
 app.get('*', (req, res) => {
     if (req.path === '/login') {
