@@ -41,7 +41,7 @@ function logout() {
     localStorage.removeItem(ADMIN_KEY);
     localStorage.removeItem(ROLE_KEY);
     localStorage.removeItem(USER_ID_KEY);
-    window.location.href = '/login';
+    window.location.href = '/';
 }
 
 /**
@@ -59,7 +59,7 @@ function authHeaders() {
  */
 function requireAuth() {
     if (!getToken()) {
-        window.location.href = '/login';
+        window.location.href = '/';
         return false;
     }
     return true;

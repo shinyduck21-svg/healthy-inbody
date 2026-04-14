@@ -63,9 +63,13 @@ app.get('*', (req, res) => {
     if (req.path === '/signup') {
         return res.sendFile(path.join(__dirname, '..', 'public', 'signup.html'));
     }
+    if (req.path === '/dashboard') {
+        return res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
+    }
     if (req.path.startsWith('/member')) {
         return res.sendFile(path.join(__dirname, '..', 'public', 'member.html'));
     }
+    // 기본 루트(/) 및 알 수 없는 경로는 랜딩 페이지(index.html)로 연결
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 

@@ -7,6 +7,8 @@
     <title>MongFit - 회원가입</title>
     <meta name="description" content="MongFit 인바디 관리 시스템 신규 회원가입" />
     <link rel="stylesheet" href="/css/style.css" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#6366f1" />
 </head>
 
 <body>
@@ -77,7 +79,7 @@
     <script src="/js/auth.js"></script>
     <script>
         // 이미 로그인된 경우 대시보드로
-        if (getToken()) window.location.href = '/';
+        if (getToken()) window.location.href = '/dashboard';
 
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -130,6 +132,14 @@
                 btn.disabled = false;
             }
         });
+    </script>
+    <script>
+        // 서비스 워커 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
     </script>
 </body>
 

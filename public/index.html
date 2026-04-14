@@ -4,14 +4,133 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MongFit - 인바디 관리 시스템</title>
-    <meta name="description" content="MongFit 회원 인바디 관리 대시보드" />
+    <title>MongFit - 당신의 건강한 변화를 시작하세요</title>
+    <meta name="description" content="인바디 관리부터 맞춤형 건강 프로그램까지, MongFit과 함께하세요." />
     <link rel="stylesheet" href="/css/style.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0ea5e9" />
+    <style>
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            z-index: 10;
+            max-width: 800px;
+            animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-xl {
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            border-radius: 50px;
+        }
+
+        .features {
+            padding: 5rem 0;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        /* 배경 장식 */
+        .blob {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: var(--gradient-primary);
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: 0;
+            border-radius: 50%;
+            animation: move 20s infinite alternate;
+        }
+
+        @keyframes move {
+            from { transform: translate(-10%, -10%); }
+            to { transform: translate(10%, 10%); }
+        }
+
+        /* 설치 안내 툴팁 */
+        #installBanner {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--primary);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+    </style>
 </head>
 
 <body>
+    <div class="blob" style="top:-10%; left:-10%;"></div>
+    <div class="blob" style="bottom:-10%; right:-10%;"></div>
 
-    <!-- 상단 네비게이션 -->
     <nav class="navbar">
         <div class="container navbar-inner">
             <a href="/" class="navbar-brand">
@@ -19,582 +138,104 @@
                 <span class="navbar-title">MongFit</span>
             </a>
             <div class="navbar-right">
-                <div class="admin-badge">
-                    <div class="admin-dot"></div>
-                    <span id="adminName">관리자</span>
-                </div>
-                <button class="btn btn-secondary btn-sm admin-only" id="viewAccessLogsBtn"
-                    onclick="openAccessLogsModal()" style="display:none;">접속 로그</button>
-                <button class="btn btn-secondary btn-sm" id="myProfileBtn">내 정보</button>
-                <button class="btn btn-secondary btn-sm" onclick="logout()" id="logoutBtn">로그아웃</button>
-            </div>
+                <a href="/login" class="btn btn-secondary btn-sm">로그인</a>
+            </a>
         </div>
     </nav>
 
-    <!-- 메인 콘텐츠 -->
-    <main class="container">
-        <!-- 내 몸 혁명 프로그램 대시보드 (회원 전용) -->
-        <div id="revolutionDashboard" style="display:none;" class="mb-3">
-            <div class="card revolution-card">
-                <div class="flex-between mb-2">
-                    <div class="flex gap-2" style="align-items:center;">
-                        <div class="revolution-badge">DAY <span id="revDayCount">1</span></div>
-                        <div>
-                            <h2 class="revolution-title" id="revPhaseTitle">1단계: 지방 대사 활성화 (비움)</h2>
-                            <p class="revolution-subtitle" id="revPhaseDesc">정제 탄수화물을 끊고 몸을 가볍게 만듭니다.</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-1">
-                        <button class="btn btn-secondary btn-sm" onclick="openRevGuideModal()">📖 가이드</button>
-                        <button class="btn btn-secondary btn-sm" onclick="openRevReportModal()">📊 리포트</button>
-                        <button class="btn btn-secondary btn-sm" onclick="stopRevolutionProgram()"
-                            style="color:var(--danger); border-color:var(--danger);">🛑 중단</button>
-                        <button class="btn btn-primary btn-sm" onclick="openRevMissionModal()">📝 오늘 미션 체크</button>
-                    </div>
-                </div>
-                <!-- 프로그레스 바 -->
-                <div class="rev-progress-container">
-                    <div class="rev-progress-bar" id="revProgressBar" style="width: 3.5%;"></div>
-                </div>
-                <div class="flex-between mt-1">
-                    <span class="rev-stat text-muted">시작일: <span id="revStartDate">-</span></span>
-                    <span class="rev-stat text-muted">진행률: <span id="revProgressPercent">3.5</span>%</span>
-                </div>
-
-                <!-- 캘린더 영역 추가 -->
-                <div id="revCalendarContainer" class="mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.05);">
-                    <div class="calendar-header flex-between mb-2">
-                        <span style="font-size:0.9rem; font-weight:700;">📅 미션 히스토리</span>
-                        <div class="flex gap-1" style="align-items:center;">
-                            <button class="btn btn-secondary btn-xs" onclick="changeRevMonth(-1)">◀</button>
-                            <span id="revCalendarMonth"
-                                style="font-size:0.85rem; min-width:80px; text-align:center; font-weight:600;">2026.03</span>
-                            <button class="btn btn-secondary btn-xs" onclick="changeRevMonth(1)">▶</button>
-                        </div>
-                    </div>
-                    <div id="revCalendar" class="rev-calendar"></div>
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">몸, 마음, 그리고 삶의<br><span class="text-gradient">근육을 채우다</span></h1>
+                <p class="hero-subtitle">인바디 기록 관리부터 박용우 박사님의 4주 신진대사 리셋 프로그램까지, 몽핏과 함께 건강한 변화를 시작하세요.</p>
+                <div class="flex gap-1" style="justify-content:center;">
+                    <button class="btn btn-primary btn-xl" id="startBtn">지금 시작하기</button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 프로그램 시작 권유 배너 (시작 전인 회원용) -->
-        <div id="startRevolutionBanner" style="display:none;" class="mb-3">
-            <div class="card" style="background:var(--gradient-primary); border:none; color:white; padding:1.5rem;">
-                <div class="flex-between">
-                    <div>
-                        <h2 style="font-weight:800; margin-bottom:0.25rem;">🚀 마이옵티멀 4주 프로그램</h2>
-                        <p style="opacity:0.9; font-size:0.95rem;">박용우 교수님의 4주 신진대사 리셋 프로젝트에 참여해 보세요.</p>
+        <section class="features">
+            <div class="container">
+                <div style="text-align:center;">
+                    <h2 class="section-title">주요 기능</h2>
+                    <p class="text-muted">완벽한 건강 관리를 위한 올인원 솔루션</p>
+                </div>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="feature-icon">📊</span>
+                        <h3>인바디 기록 관리</h3>
+                        <p class="text-muted">변화하는 체성분을 직관적인 그래프로 확인하고 관리하세요.</p>
                     </div>
-                    <button class="btn btn-secondary" onclick="startRevolutionProgram()"
-                        style="background:white; color:var(--primary); border:none;">지금 시작하기</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ====== 내 몸 혁명 시작 날짜 선택 모달 ====== -->
-        <div class="modal-overlay" id="startRevModal">
-            <div class="modal" style="max-width:400px;">
-                <div class="modal-header">
-                    <h2 class="modal-title">프로그램 시작하기</h2>
-                    <button class="close-btn" onclick="closeStartRevModal()">✕</button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted mb-3" style="font-size:0.9rem;">
-                        마이옵티멀 4주 프로그램을 시작할 날짜를 선택해 주세요.
-                    </p>
-                    <div class="form-group">
-                        <label class="form-label" for="revStartDateInput">시작 일자</label>
-                        <input type="date" id="revStartDateInput" class="form-input" />
+                    <div class="feature-card">
+                        <span class="feature-icon">🚀</span>
+                        <h3>4주 리셋 프로그램</h3>
+                        <p class="text-muted">박용우 박사님의 검증된 신진대사 활성화 미션을 매일 체크합니다.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">📅</span>
+                        <h3>여성 주기 관리</h3>
+                        <p class="text-muted">월경 주기를 기반으로 한 맞춤형 컨디션 케어를 지원합니다.</p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="closeStartRevModal()">취소</button>
-                    <button class="btn btn-primary" id="confirmStartRevBtn"
-                        onclick="submitStartRevolution()">시작하기</button>
-                </div>
             </div>
-        </div>
-
-        <!-- 페이지 헤더 -->
-        <div class="page-header">
-            <div class="page-header-inner">
-                <div>
-                    <h1>회원 목록</h1>
-                    <p class="page-subtitle">인바디 기록을 관리할 회원을 선택하세요</p>
-                </div>
-                <button class="btn btn-primary" id="addMemberBtn">
-                    ＋ 회원 추가
-                </button>
-            </div>
-        </div>
-
-        <!-- 통계 카드 -->
-        <div class="stats-grid mb-3" style="display:grid; grid-template-columns: repeat(4,1fr); gap:1rem;">
-            <div class="stat-card" id="statCardTotal" style="cursor:pointer;">
-                <div class="stat-icon stat-icon-primary">👥</div>
-                <div>
-                    <div class="stat-value" id="statTotal">0</div>
-                    <div class="stat-label">전체 회원</div>
-                </div>
-            </div>
-            <div class="stat-card" id="statCardMale" style="cursor:pointer;">
-                <div class="stat-icon stat-icon-accent">♂</div>
-                <div>
-                    <div class="stat-value" id="statMale">0</div>
-                    <div class="stat-label">남성 회원</div>
-                </div>
-            </div>
-            <div class="stat-card" id="statCardFemale" style="cursor:pointer;">
-                <div class="stat-icon stat-icon-warning">♀</div>
-                <div>
-                    <div class="stat-value" id="statFemale">0</div>
-                    <div class="stat-label">여성 회원</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon stat-icon-success">📊</div>
-                <div>
-                    <div class="stat-value" id="statRecords">0</div>
-                    <div class="stat-label">총 측정 횟수</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 검색 및 필터 -->
-        <div class="card mb-3" style="padding:1rem 1.5rem;">
-            <div class="flex gap-2" style="align-items: center;">
-                <div class="search-wrapper" style="flex: 1;">
-                    <span class="search-icon">🔍</span>
-                    <input class="form-input search-input" type="text" id="memberSearch" oninput="debounceSearch()"
-                        placeholder="이름 또는 연락처로 검색..." />
-                </div>
-                <select class="form-select" id="groupFilter" onchange="loadMembers()"
-                    style="width: auto; min-width: 150px;">
-                    <option value="">모든 그룹</option>
-                </select>
-                <button class="btn btn-secondary" onclick="openGroupModal()">⚙️ 그룹 관리</button>
-            </div>
-        </div>
-
-        <!-- 회원 카드 목록 -->
-        <div id="membersContainer">
-            <div class="members-grid" id="membersGrid"></div>
-            <div class="empty-state" id="emptyState" style="display:none;">
-                <div class="empty-state-icon">👤</div>
-                <h3>등록된 회원이 없습니다</h3>
-                <p>우측 상단의 '회원 추가' 버튼으로 새 회원을 등록해 보세요.</p>
-            </div>
-        </div>
+        </section>
     </main>
 
-    <!-- ====== 회원 추가/편집 모달 ====== -->
-    <div class="modal-overlay" id="memberModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title" id="memberModalTitle">회원 추가</h2>
-                <button class="close-btn" onclick="closeMemberModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="editMemberId" />
-                <div class="form-grid mb-2">
-                    <div class="form-group">
-                        <label class="form-label" for="memberName">이름 *</label>
-                        <input class="form-input" type="text" id="memberName" placeholder="홍길동" required />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="memberGender">성별</label>
-                        <select class="form-select" id="memberGender">
-                            <option value="">선택 안 함</option>
-                            <option value="M">남성</option>
-                            <option value="F">여성</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-grid mb-2">
-                    <div class="form-group">
-                        <label class="form-label" for="memberGroup">소속 그룹</label>
-                        <select class="form-select" id="memberGroup">
-                            <option value="">그룹 없음</option>
-                            <!-- 그룹 목록 동적 삽입 -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="memberAge">나이</label>
-                        <input class="form-input" type="number" id="memberAge" placeholder="25" />
-                    </div>
-                </div>
-                <div class="form-group mb-2">
-                    <label class="form-label" for="memberPhone">연락처</label>
-                    <input class="form-input" type="tel" id="memberPhone" placeholder="010-0000-0000" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="memberMemo">메모</label>
-                    <textarea class="form-textarea" id="memberMemo" placeholder="특이사항, 목표 등"
-                        style="height: 80px;"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeMemberModal()">취소</button>
-                <button class="btn btn-primary" id="saveMemberBtn" onclick="saveMember()">저장</button>
-            </div>
-        </div>
+    <div id="installBanner">
+        <span>더 빠르고 편하게 앱으로 이용해 보세요!</span>
+        <button class="btn btn-primary btn-sm" id="installBtn">앱 설치</button>
     </div>
 
-    <!-- ====== 그룹 관리 모달 ====== -->
-    <div class="modal-overlay" id="groupModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">그룹 관리</h2>
-                <button class="close-btn" onclick="closeGroupModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="flex gap-1 mb-3">
-                    <input class="form-input" type="text" id="newGroupName" placeholder="새 그룹 이름 (예: 챌린지반)" />
-                    <button class="btn btn-primary" onclick="addGroup()">추가</button>
-                </div>
-                <div id="groupListContainer" class="list-container">
-                    <!-- 그룹 목록 동적 삽입 -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeGroupModal()">닫기</button>
-            </div>
-        </div>
-    </div>
-    <!-- ====== 회원 삭제 확인 모달 ====== -->
-    <div class="modal-overlay" id="deleteModal">
-        <div class="modal" style="max-width:380px;">
-            <div class="modal-header">
-                <h2 class="modal-title">회원 삭제</h2>
-                <button class="close-btn"
-                    onclick="document.getElementById('deleteModal').classList.remove('active')">✕</button>
-            </div>
-            <div class="modal-body">
-                <p style="color:var(--text-secondary);">
-                    <strong id="deleteMemberName" style="color:var(--text-primary)"></strong> 회원을 삭제하면 모든 인바디 기록도 함께
-                    삭제됩니다. 계속하시겠습니까?
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary"
-                    onclick="document.getElementById('deleteModal').classList.remove('active')">취소</button>
-                <button class="btn btn-danger" id="confirmDeleteBtn">삭제</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="toast-container"></div>
-
-    <!-- 내 정보 수정 모달 -->
-    <div class="modal-overlay" id="myProfileModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">내 정보 수정</h2>
-                <button class="close-btn" onclick="closeMyProfileModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">이메일</label>
-                        <input type="email" id="myEmail" class="form-input" readonly
-                            style="background-color:var(--bg-card-hover); cursor:not-allowed;">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">이름</label>
-                        <input type="text" id="myName" class="form-input" placeholder="이름 입력">
-                    </div>
-                    <div class="form-group member-only-field">
-                        <label class="form-label">성별</label>
-                        <select id="myGender" class="form-select">
-                            <option value="">선택</option>
-                            <option value="M">남성</option>
-                            <option value="F">여성</option>
-                        </select>
-                    </div>
-                    <div class="form-group member-only-field">
-                        <label class="form-label">나이</label>
-                        <input type="number" id="myAge" class="form-input" placeholder="나이">
-                    </div>
-                    <div class="form-group member-only-field form-full">
-                        <label class="form-label">연락처</label>
-                        <input type="tel" id="myPhone" class="form-input" placeholder="연락처 입력">
-                    </div>
-                </div>
-
-                <div class="divider mt-3"></div>
-                <div class="section-title" style="font-size: 0.9rem; margin-bottom: 1rem;">비밀번호 변경 (주기적인 변경을 권장합니다)
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">현재 비밀번호</label>
-                        <input type="password" id="myCurrentPassword" class="form-input" placeholder="현재 비밀번호">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">새 비밀번호</label>
-                        <input type="password" id="myNewPassword" class="form-input" placeholder="새 비밀번호">
-                    </div>
-                    <div class="form-group form-full">
-                        <label class="form-label">새 비밀번호 확인</label>
-                        <input type="password" id="myConfirmNewPassword" class="form-input" placeholder="새 비밀번호 다시 입력">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" id="saveMyProfileBtn" onclick="saveMyProfile()">저장</button>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- 내 몸 혁명 오늘 미션 모달 -->
-    <div class="modal-overlay" id="revMissionModal">
-        <div class="modal" style="max-width:450px;">
-            <div class="modal-header">
-                <h2 class="modal-title">몸, 마음, 삶의근육</h2>
-                <button class="close-btn" onclick="closeRevMissionModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted mb-2" id="revMissionDate">2026-03-01 (Day 1)</p>
-
-                <div class="mission-item">
-                    <div class="flex-between">
-                        <div>
-                            <span>🥛 단백질 셰이크 (목표: <span id="targetShake">4</span>회)</span>
-                            <div class="text-muted" style="font-size:0.75rem; margin-top:0.2rem;">
-                                하루 권장 단백질: <span id="targetProtein">0</span>g
-                            </div>
-                        </div>
-                        <div class="flex gap-1" style="align-items:center;">
-                            <button class="btn btn-secondary btn-sm" onclick="adjustShake(-1)">-</button>
-                            <span id="currentShake"
-                                style="font-weight:bold; min-width:20px; text-align:center;">0</span>
-                            <button class="btn btn-secondary btn-sm" onclick="adjustShake(1)">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mission-item" id="revFastingRow">
-                    <div class="flex-between">
-                        <span>⏳ 간헐적 단식 시간 (권장: <span id="targetFasting">14</span>시간+)</span>
-                        <div class="flex gap-1" style="align-items:center;">
-                            <input type="number" id="missFasting" class="form-input" style="width:70px; padding:0.3rem;"
-                                placeholder="0">
-                            <span class="text-muted">시간</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mission-item">
-                    <label class="flex gap-2" style="align-items:center; cursor:pointer;">
-                        <input type="checkbox" id="missHiit" class="form-checkbox">
-                        <span>🏃 고강도 인터벌 운동 (HIIT) 완료</span>
-                    </label>
-                </div>
-
-                <div class="mission-item">
-                    <label class="flex gap-2" style="align-items:center; cursor:pointer;">
-                        <input type="checkbox" id="missNoSugar" class="form-checkbox" checked>
-                        <span>💧 수분 섭취 성공 (2L 이상)</span>
-                    </label>
-                </div>
-
-                <div class="mission-item">
-                    <label class="flex gap-2" style="align-items:center; cursor:pointer;">
-                        <input type="checkbox" id="missNoAlcohol" class="form-checkbox" checked>
-                        <span>🌙 수면 시간 달성 (7시간 이상)</span>
-                    </label>
-                </div>
-
-                <div class="form-group mt-2">
-                    <label class="form-label">☀️ 아침긍정확언/컨디션 체크</label>
-                    <textarea class="form-textarea" id="revNotes" placeholder="오늘 느낀 몸의 변화나 메모를 남겨보세요."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeRevMissionModal()">닫기</button>
-                <button class="btn btn-primary" id="saveRevLogBtn" onclick="saveRevLog()">오늘 기록 저장</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 내 몸 혁명 성공 리포트 모달 -->
-    <div class="modal-overlay" id="revReportModal">
-        <div class="modal" style="max-width:500px;">
-            <div class="modal-header">
-                <h2 class="modal-title">몽핏 리포트</h2>
-                <button class="close-btn" onclick="closeRevReportModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="card mb-2" style="background:var(--bg-card); border:1px solid var(--glass-border);">
-                    <div style="text-align:center; padding:1.5rem;">
-                        <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">총 달성률</div>
-                        <div style="font-size:2.5rem; font-weight:800; color:var(--primary); line-height:1;">
-                            <span id="repAchievement">0</span>%
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-2 mb-2">
-                    <div class="stat-card" style="padding:1rem; text-align:center;">
-                        <div style="font-size:0.75rem; color:var(--text-muted);">미션 수행일</div>
-                        <div style="font-size:1.2rem; font-weight:700;" id="repTotalDays">0일</div>
-                    </div>
-                    <div class="stat-card" style="padding:1rem; text-align:center;">
-                        <div style="font-size:0.75rem; color:var(--text-muted);">HIIT 완료</div>
-                        <div style="font-size:1.2rem; font-weight:700;" id="repHiitCount">0회</div>
-                    </div>
-                </div>
-
-                <div style="margin-bottom:1rem;">
-                    <div class="flex-between mb-1">
-                        <span style="font-size:0.85rem;">🥛 셰이크 준수율</span>
-                        <span style="font-size:0.85rem; font-weight:700;" id="repShakePct">0%</span>
-                    </div>
-                    <div class="rev-progress-container" style="margin-top:0;">
-                        <div class="rev-progress-bar" id="repBarShake" style="width: 0%;"></div>
-                    </div>
-                </div>
-
-                <div style="margin-bottom:1rem;">
-                    <div class="flex-between mb-1">
-                        <span style="font-size:0.85rem;">⏳ 단식 목표 달성률</span>
-                        <span style="font-size:0.85rem; font-weight:700;" id="repFastingPct">0%</span>
-                    </div>
-                    <div class="rev-progress-container" style="margin-top:0;">
-                        <div class="rev-progress-bar" id="repBarFasting"
-                            style="width: 0%; background:var(--gradient-success);"></div>
-                    </div>
-                </div>
-
-                <!-- 최근 기록 리스트 -->
-                <div style="border-top:1px solid var(--glass-border); padding-top:1rem;">
-                    <h3 style="font-size:0.9rem; margin-bottom:0.75rem;">최근 마이옵티멀 기록 (7일)</h3>
-                    <div id="repLogList" style="max-height:200px; overflow-y:auto; font-size:0.85rem;">
-                        <!-- JS에서 렌더링 -->
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeRevReportModal()">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 내 몸 혁명 가이드 모달 (식단/운동) -->
-    <div class="modal-overlay" id="revGuideModal">
-        <div class="modal" style="max-width:550px;">
-            <div class="modal-header">
-                <h2 class="modal-title">마이옵티멀 가이드북</h2>
-                <button class="close-btn" onclick="closeRevGuideModal()">✕</button>
-            </div>
-            <div class="modal-body" style="padding:0;">
-                <div class="rev-tabs">
-                    <button class="rev-tab active" onclick="switchRevGuideTab(this, 'food')">🥗 식단 가이드</button>
-                    <button class="rev-tab" onclick="switchRevGuideTab(this, 'workout')">🏃 운동 가이드</button>
-                </div>
-
-                <div id="guideTabFood" class="rev-tab-content active">
-                    <div style="padding:1.2rem;">
-                        <h3 class="mb-2" style="font-size:1rem; color:var(--primary);">✅ 마음껏 드셔도 좋습니다 (허용 식품)</h3>
-                        <div class="guide-grid mb-3">
-                            <div class="guide-item">🟢 모든 잎채소 (상추, 깻잎 등)</div>
-                            <div class="guide-item">🟢 두부, 삶은 달걀</div>
-                            <div class="guide-item">🟢 무가당 플레인 요거트</div>
-                            <div class="guide-item">🟢 해조류 (미역, 다시마)</div>
-                            <div class="guide-item">🟢 생선, 해산물</div>
-                            <div class="guide-item">🟢 닭가슴살 (삶거나 구운 것)</div>
-                        </div>
-
-                        <h3 class="mb-2" style="font-size:1rem; color:var(--error);">❌ 절대 피해야 합니다 (제한 식품)</h3>
-                        <div class="guide-grid">
-                            <div class="guide-item red">🔴 설탕, 액상과당 (음료수)</div>
-                            <div class="guide-item red">🔴 밀가루 음식 (빵, 면)</div>
-                            <div class="guide-item red">🔴 술 (알코올)</div>
-                            <div class="guide-item red">🔴 믹스커피, 단 커피</div>
-                            <div class="guide-item red">🔴 트랜스 지방 (튀김)</div>
-                            <div class="guide-item red">🔴 짠 국물 요리</div>
-                        </div>
-
-                        <div class="alert alert-info mt-3" style="font-size:0.85rem;">
-                            💡 <strong>Tip:</strong> 1주차(Day 1-3)는 단백질 셰이크만 4번!
-                        </div>
-                    </div>
-                </div>
-
-                <div id="guideTabWorkout" class="rev-tab-content">
-                    <div style="padding:1.2rem;">
-                        <h3 class="mb-2" style="font-size:1rem; color:var(--primary);">🔥 4분 HIIT (고강도 인터벌 운동)</h3>
-                        <p class="text-muted mb-3" style="font-size:0.85rem;">신진대사를 깨우는 가장 강력한 방법입니다. '숨이 턱에 찰 정도'의
-                            강도로
-                            수행하세요.</p>
-
-                        <div
-                            style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px; margin-bottom:1rem;">
-                            <div class="flex-between mb-1">
-                                <span style="font-weight:700;">강력한 운동 (20초)</span>
-                                <span class="badge badge-error">MAX POWER</span>
-                            </div>
-                            <div class="flex-between mb-2">
-                                <span style="font-weight:700;">불완전 휴식 (10초)</span>
-                                <span class="badge badge-secondary">REST</span>
-                            </div>
-                            <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">총 8라운드 반복 (약
-                                4분)
-                            </div>
-                        </div>
-
-                        <h4 class="mb-2" style="font-size:0.9rem;">추천 HIIT 동작</h4>
-                        <div class="guide-list">
-                            <li>🏃 <strong>제자리 전력 질주</strong>: 무릎을 높이 들고 최대한 빠르게!</li>
-                            <li>🤸 <strong>버피 테스트</strong>: 전신을 사용하는 최고의 유산소근력 운동.</li>
-                            <li>🦵 <strong>스쿼트 점프</strong>: 하체 근육을 강하게 자극하여 대사량 증가.</li>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeRevGuideModal()">알겠습니다</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ====== 접속 로그 모달 ====== -->
-    <div class="modal-overlay" id="accessLogsModal">
-        <div class="modal" style="max-width: 900px; width: 95%;">
-            <div class="modal-header">
-                <h2 class="modal-title">시스템 접속 로그 (최근 100건)</h2>
-                <button class="close-btn" onclick="closeAccessLogsModal()">✕</button>
-            </div>
-            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0;">
-                <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                    <thead>
-                        <tr style="background: var(--bg-card-hover); text-align: left; position: sticky; top: 0;">
-                            <th style="padding: 0.8rem 1rem;">시간</th>
-                            <th style="padding: 0.8rem 1rem;">사용자</th>
-                            <th style="padding: 0.8rem 1rem;">IP</th>
-                            <th style="padding: 0.8rem 1rem;">메소드</th>
-                            <th style="padding: 0.8rem 1rem;">경로</th>
-                            <th style="padding: 0.8rem 1rem;">브라우저</th>
-                        </tr>
-                    </thead>
-                    <tbody id="accessLogsTableBody">
-                        <!-- 데이터 로딩 표시 -->
-                        <tr>
-                            <td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);">로그를
-                                불러오는 중...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeAccessLogsModal()">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/js/utils.js"></script>
     <script src="/js/auth.js"></script>
-    <script src="/js/dashboard.js"></script>
+    <script>
+        // 이미 로그인된 경우 리다이렉트
+        if (getToken()) {
+            window.location.href = '/dashboard';
+        }
+
+        // PWA 설치 로직
+        let deferredPrompt;
+        const startBtn = document.getElementById('startBtn');
+        const installBanner = document.getElementById('installBanner');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // 설치 제안 이벤트를 가로채서 보관
+            e.preventDefault();
+            deferredPrompt = e;
+            // 설치 안내 배너 표시
+            installBanner.style.display = 'flex';
+        });
+
+        async function triggerInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installBanner.style.display = 'none';
+                
+                // 설치 시도 후 로그인 페이지로
+                window.location.href = '/login';
+            } else {
+                // 이미 설치되었거나 지원하지 않는 경우 바로 로그인으로
+                window.location.href = '/login';
+            }
+        }
+
+        startBtn.addEventListener('click', triggerInstall);
+        installBtn.addEventListener('click', triggerInstall);
+
+        // 서비스 워커 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker 등록 성공'))
+                    .catch(err => console.log('Service Worker 등록 실패', err));
+            });
+        }
+    </script>
 </body>
 
 </html>

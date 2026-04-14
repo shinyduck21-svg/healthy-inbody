@@ -16,10 +16,32 @@ if (role !== 'admin') {
     if (adminNameSpan) adminNameSpan.textContent = getAdminName();
 }
 
-// URL에서 회원 ID 파싱
 const urlParams = new URLSearchParams(window.location.search);
 const MEMBER_ID = urlParams.get('id');
 if (!MEMBER_ID) window.location.href = '/';
+
+// 관리자인 경우 비밀번호 초기화 버튼 노출 및 이벤트 연결
+if (role === 'admin') {
+    const resetBtn = document.getElementById('resetPasswordBtn');
+    if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+        resetBtn.addEventListener('click', async () => {
+            if (!confirm('이 사용자의 비밀번호를 초기화하시겠습니까?')) return;
+            try {
+                const res = await apiFetch(`/api/admin/users/${MEMBER_ID}/reset-password`, { method: 'PATCH' });
+                if (!res) return;
+                const data = await res.json();
+                if (data.success) {
+                    alert(`${data.message}\n사용자에게 안내해주세요.`);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('비밀번호 초기화 중 오류가 발생했습니다.', 'error');
+            }
+        });
+    }
+}
 
 let memberData = null;
 let inbodyRecords = [];
