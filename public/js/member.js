@@ -134,8 +134,8 @@ function renderLatestSummary(records) {
     const items = [
         { label: '체중', value: fmtNum(latest.weight, 'kg'), key: 'weight' },
         { label: '골격근량', value: fmtNum(latest.skeletal_muscle, 'kg'), key: 'skeletal_muscle' },
-        { label: '체지방량', value: fmtNum(latest.body_fat, 'kg'), key: 'body_fat' },
-        { label: '체지방률', value: fmtNum(latest.body_fat_pct, '%'), key: 'body_fat_pct' }
+        { label: '체지방률', value: fmtNum(latest.body_fat_pct, '%'), key: 'body_fat_pct' },
+        { label: '내장지방', value: fmtNum(latest.visceral_fat, 'Lv'), key: 'visceral_fat' }
     ];
 
     document.getElementById('latestSummary').innerHTML = items.map(item => {
@@ -255,7 +255,7 @@ function renderWeightChart(records) {
 function renderInbodyChart(records) {
     const card = document.getElementById('inbodyChartCard');
     const valid = records.filter(
-        r => r.skeletal_muscle != null || r.body_fat != null || r.body_fat_pct != null
+        r => r.skeletal_muscle != null || r.body_fat != null || r.body_fat_pct != null || r.visceral_fat != null
     ).slice().reverse();
 
     if (valid.length < 2) {
@@ -269,6 +269,7 @@ function renderInbodyChart(records) {
     const muscleVals = valid.map(r => r.skeletal_muscle != null ? parseFloat(r.skeletal_muscle) : null);
     const fatVals = valid.map(r => r.body_fat != null ? parseFloat(r.body_fat) : null);
     const fatPctVals = valid.map(r => r.body_fat_pct != null ? parseFloat(r.body_fat_pct) : null);
+    const visceralVals = valid.map(r => r.visceral_fat != null ? parseFloat(r.visceral_fat) : null);
 
     const ctx = document.getElementById('inbodyComboChart').getContext('2d');
     if (inbodyChartInstance) inbodyChartInstance.destroy();
@@ -281,7 +282,9 @@ function renderInbodyChart(records) {
 
     const opts = commonChartOptions({
         label: item => {
-            const suffix = item.datasetIndex === 2 ? ' %' : ' kg';
+            let suffix = ' kg';
+            if (item.datasetIndex === 2) suffix = ' %';
+            if (item.datasetIndex === 3) suffix = ' Lv';
             return ` ${item.dataset.label}: ${item.parsed.y}${suffix}`;
         }
     });
@@ -292,6 +295,9 @@ function renderInbodyChart(records) {
         }),
         yPct: Object.assign(makeYScale('%', { position: 'right', grid: { drawOnChartArea: false } }), {
             title: { display: true, text: '%', color: '#64748b', font: { size: 10 } }
+        }),
+        yLv: Object.assign(makeYScale('Lv', { position: 'right', grid: { drawOnChartArea: false } }), {
+            title: { display: true, text: 'Lv', color: '#64748b', font: { size: 10 } }
         })
     };
 
@@ -347,6 +353,23 @@ function renderInbodyChart(records) {
                     fill: false,
                     borderWidth: 2,
                     borderDash: [5, 4],
+                    spanGaps: true,
+                },
+                {
+                    label: '내장지방',
+                    data: visceralVals,
+                    yAxisID: 'yLv',
+                    borderColor: '#10b981',
+                    backgroundColor: 'transparent',
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#0a0f1e',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 8,
+                    tension: 0.4,
+                    fill: false,
+                    borderWidth: 3,
+                    borderDash: [2, 2],
                     spanGaps: true,
                 }
             ]
@@ -449,6 +472,7 @@ function renderRecordsTable(records) {
       <td>${fmtNum(r.skeletal_muscle)}</td>
       <td>${fmtNum(r.body_fat)}</td>
       <td>${fmtNum(r.body_fat_pct)}</td>
+      <td>${fmtNum(r.visceral_fat)}</td>
       <td style="text-align:center;">
         <div class="flex gap-1" style="justify-content:center;">
           <button class="btn btn-icon btn-sm" title="편집" onclick="openEditInbody(${r.id})">✏️</button>
@@ -473,7 +497,7 @@ function closeInbodyModal() {
 }
 
 function clearInbodyForm() {
-    ['ibMeasuredAt', 'ibWeight', 'ibSkeletal', 'ibBodyFat', 'ibBodyFatPct', 'ibNotes']
+    ['ibMeasuredAt', 'ibWeight', 'ibSkeletal', 'ibBodyFat', 'ibBodyFatPct', 'ibVisceralFat', 'ibNotes']
         .forEach(id => document.getElementById(id).value = '');
 }
 
@@ -489,6 +513,7 @@ function openEditInbody(id) {
     document.getElementById('ibSkeletal').value = r.skeletal_muscle ?? '';
     document.getElementById('ibBodyFat').value = r.body_fat ?? '';
     document.getElementById('ibBodyFatPct').value = r.body_fat_pct ?? '';
+    document.getElementById('ibVisceralFat').value = r.visceral_fat ?? '';
     document.getElementById('ibNotes').value = r.notes ?? '';
     document.getElementById('inbodyModal').classList.add('active');
 }
@@ -509,14 +534,22 @@ async function saveInbody() {
         }
     }
 
+    const getVal = (id) => {
+        const v = document.getElementById(id).value;
+        return (v === '' || v === null) ? null : v;
+    };
+
     const body = {
         measured_at,
-        weight: document.getElementById('ibWeight').value || null,
-        skeletal_muscle: document.getElementById('ibSkeletal').value || null,
-        body_fat: document.getElementById('ibBodyFat').value || null,
-        body_fat_pct: document.getElementById('ibBodyFatPct').value || null,
-        notes: document.getElementById('ibNotes').value || null,
+        weight: getVal('ibWeight'),
+        skeletal_muscle: getVal('ibSkeletal'),
+        body_fat: getVal('ibBodyFat'),
+        body_fat_pct: getVal('ibBodyFatPct'),
+        visceral_fat: getVal('ibVisceralFat'),
+        notes: getVal('ibNotes'),
     };
+
+    console.log('[DEBUG] Saving InBody Record:', { id, body });
 
     const btn = document.getElementById('saveInbodyBtn');
     btn.innerHTML = '<span class="spinner"></span>';

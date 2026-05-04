@@ -38,20 +38,24 @@ router.post('/member/:memberId', async (req, res) => {
         if (!member) return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
 
         const {
-            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, notes
+            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, visceral_fat, notes
         } = req.body;
 
         if (!measured_at) return res.status(400).json({ success: false, message: '측정일은 필수입니다.' });
 
+        console.log('[DEBUG] POST InBody Request Body:', req.body);
+
+        const getVal = (v) => (v === undefined || v === null || v === '') ? null : v;
+
         const result = await db.run(`
       INSERT INTO inbody_records
-      (member_id, measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      (member_id, measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, visceral_fat, notes)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING id
     `, [
             req.params.memberId, measured_at,
-            weight || null, skeletal_muscle || null, body_fat || null, body_fat_pct || null,
-            notes || null
+            getVal(weight), getVal(skeletal_muscle), getVal(body_fat), getVal(body_fat_pct),
+            getVal(visceral_fat), getVal(notes)
         ]);
 
         const newRecord = await db.get('SELECT * FROM inbody_records WHERE id = $1', [result.lastInsertRowid]);
@@ -74,16 +78,20 @@ router.put('/:id', async (req, res) => {
         }
 
         const {
-            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, notes
+            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, visceral_fat, notes
         } = req.body;
+
+        console.log('[DEBUG] PUT InBody Request Body:', req.body);
+
+        const getVal = (v) => (v === undefined || v === null || v === '') ? null : v;
 
         await db.run(`
       UPDATE inbody_records SET
-      measured_at = $1, weight = $2, skeletal_muscle = $3, body_fat = $4, body_fat_pct = $5, notes = $6
-      WHERE id = $7
+      measured_at = $1, weight = $2, skeletal_muscle = $3, body_fat = $4, body_fat_pct = $5, visceral_fat = $6, notes = $7
+      WHERE id = $8
     `, [
-            measured_at, weight || null, skeletal_muscle || null, body_fat || null, body_fat_pct || null,
-            notes || null, req.params.id
+            measured_at, getVal(weight), getVal(skeletal_muscle), getVal(body_fat), getVal(body_fat_pct),
+            getVal(visceral_fat), getVal(notes), req.params.id
         ]);
 
         const updated = await db.get('SELECT * FROM inbody_records WHERE id = $1', [req.params.id]);

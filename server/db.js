@@ -72,6 +72,13 @@ async function initDB() {
         UNIQUE(member_id, measured_at)
       );
 
+      -- inbody_records 테이블 스키마 보정
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='inbody_records' AND column_name='visceral_fat') THEN
+          ALTER TABLE inbody_records ADD COLUMN visceral_fat REAL;
+        END IF;
+      END $$;
+
       -- 마이옵티멀 로그 테이블
       CREATE TABLE IF NOT EXISTS revolution_logs (
         id SERIAL PRIMARY KEY,
