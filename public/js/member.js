@@ -465,22 +465,125 @@ function renderRecordsTable(records) {
     empty.style.display = 'none';
     table.style.display = 'block';
 
-    tbody.innerHTML = records.map(r => `
-    <tr>
-      <td><strong>${formatDate(r.measured_at)}</strong></td>
-      <td>${fmtNum(r.weight)}</td>
-      <td>${fmtNum(r.skeletal_muscle)}</td>
-      <td>${fmtNum(r.body_fat)}</td>
-      <td>${fmtNum(r.body_fat_pct)}</td>
-      <td>${fmtNum(r.visceral_fat)}</td>
-      <td style="text-align:center;">
-        <div class="flex gap-1" style="justify-content:center;">
-          <button class="btn btn-icon btn-sm" title="편집" onclick="openEditInbody(${r.id})">✏️</button>
-          <button class="btn btn-icon btn-sm" title="삭제" onclick="openDeleteRecord(${r.id})">🗑️</button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+    tbody.innerHTML = records.map(r => {
+        const isComplete = r.weight && r.skeletal_muscle && r.body_fat && r.body_fat_pct && r.visceral_fat;
+        const isAdmin = role === 'admin';
+        
+        let feedbackHtml = '';
+        if (isAdmin) {
+            if (isComplete) {
+                feedbackHtml = `
+                    <div class="feedback-area admin-side mt-2">
+                        <textarea class="form-textarea feedback-input" id="feedback-${r.id}" 
+                            placeholder="회원을 위한 피드백을 남겨주세요...">${r.admin_feedback || ''}</textarea>
+                        <div class="flex-between mt-1">
+                            <span class="text-muted" style="font-size:0.7rem;">${r.feedback_at ? '최종 피드백: ' + formatDate(r.feedback_at) : '피드백 대기 중'}</span>
+                            <button class="btn btn-primary btn-xs" onclick="saveFeedback(${r.id})">피드백 저장</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                feedbackHtml = `<div class="feedback-guide mt-2">💡 정밀 분석을 위해 모든 지표 입력이 필요합니다.</div>`;
+            }
+        } else {
+            if (r.admin_feedback) {
+                feedbackHtml = `
+                    <div class="feedback-area user-side mt-2">
+                        <div class="feedback-header">
+                            <span class="feedback-icon">📝</span>
+                            <span class="feedback-title">전문가 정밀 피드백</span>
+                            <span class="feedback-date">${formatDate(r.feedback_at)}</span>
+                        </div>
+                        <div class="feedback-content" style="white-space: pre-wrap;">${escapeHtml(r.admin_feedback)}</div>
+                    </div>
+                `;
+            } else if (!isComplete) {
+                feedbackHtml = `<div class="feedback-guide mt-2">💡 모든 지표를 입력하고 전문가의 정밀 피드백을 받아보세요! 🚀</div>`;
+            }
+        }
+
+        const analysisBadge = isComplete ? `<span class="badge badge-success" style="font-size:0.6rem; margin-left:5px; vertical-align:middle;">정밀 분석</span>` : '';
+
+        return `
+        <tr>
+          <td colspan="7" style="padding: 0;">
+            <div class="record-row-content">
+                <table style="width:100%; border:none;">
+                    <tr>
+                      <td style="width:15%; border:none;"><strong>${formatDate(r.measured_at)}</strong>${analysisBadge}</td>
+                      <td style="width:12%; border:none;">${fmtNum(r.weight)}</td>
+                      <td style="width:12%; border:none;">${fmtNum(r.skeletal_muscle)}</td>
+                      <td style="width:12%; border:none;">${fmtNum(r.body_fat)}</td>
+                      <td style="width:12%; border:none;">${fmtNum(r.body_fat_pct)}</td>
+                      <td style="width:12%; border:none;">${fmtNum(r.visceral_fat)}</td>
+                      <td style="width:25%; border:none; text-align:right;">
+                        <div class="flex gap-1" style="justify-content:flex-end;">
+                          <button class="btn btn-icon btn-sm" title="편집" onclick="openEditInbody(${r.id})">✏️</button>
+                          <button class="btn btn-icon btn-sm" title="삭제" onclick="openDeleteRecord(${r.id})">🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                </table>
+                <div style="padding: 0 1rem 1rem 1rem;">
+                    ${feedbackHtml}
+                </div>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+}
+
+/**
+ * 관리자 피드백 저장
+ */
+async function saveFeedback(id) {
+    const el = document.getElementById(`feedback-${id}`);
+    if (!el) return;
+    const feedbackText = el.value.trim();
+    if (!feedbackText) {
+        if (!confirm('피드백을 빈칸으로 저장하시겠습니까?')) return;
+    }
+
+    const r = inbodyRecords.find(item => item.id === id);
+    const body = {
+        measured_at: r.measured_at.substring(0, 10),
+        weight: r.weight,
+        skeletal_muscle: r.skeletal_muscle,
+        body_fat: r.body_fat,
+        body_fat_pct: r.body_fat_pct,
+        visceral_fat: r.visceral_fat,
+        notes: r.notes,
+        admin_feedback: feedbackText
+    };
+
+    try {
+        const res = await apiFetch(`/api/inbody/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(body)
+        });
+        if (!res) return;
+        const data = await res.json();
+
+        if (data.success) {
+            showToast('피드백이 저장되었습니다.', 'success');
+            await loadRecords(); // 목록 새로고침
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        showToast('피드백 저장 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+/**
+ * HTML 이스케이프 함수
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ===== 인바디 추가 모달 =====

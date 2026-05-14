@@ -13,12 +13,14 @@ router.get('/', async (req, res) => {
         }
         const { search, group_id } = req.query;
         let query = `
-            SELECT m.*, g.name as group_name, COUNT(ir.id) as record_count, MAX(ir.measured_at) as last_measured,
+            SELECT m.*, g.name as group_name, 
+            (SELECT COUNT(*) FROM inbody_records WHERE member_id = m.id) as record_count,
+            (SELECT MAX(measured_at) FROM inbody_records WHERE member_id = m.id) as last_measured,
+            (SELECT COUNT(*) FROM inbody_records WHERE member_id = m.id AND (admin_feedback IS NULL OR TRIM(admin_feedback) = '')) as pending_feedback_count,
             (SELECT mh.start_date FROM menstruation_history mh WHERE mh.member_id = m.id ORDER BY mh.start_date DESC LIMIT 1) as last_period_start,
             (SELECT mh.end_date FROM menstruation_history mh WHERE mh.member_id = m.id ORDER BY mh.start_date DESC LIMIT 1) as last_period_end
             FROM members m
             LEFT JOIN member_groups g ON m.group_id = g.id
-            LEFT JOIN inbody_records ir ON m.id = ir.member_id
         `;
         let params = [];
         let where = [];
@@ -36,7 +38,7 @@ router.get('/', async (req, res) => {
             query += ` WHERE ` + where.join(' AND ');
         }
 
-        query += ` GROUP BY m.id, g.name ORDER BY m.name`;
+        query += ` ORDER BY m.name`;
 
         const members = await db.all(query, params);
         res.json({ success: true, data: members });

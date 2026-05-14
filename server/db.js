@@ -77,6 +77,12 @@ async function initDB() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='inbody_records' AND column_name='visceral_fat') THEN
           ALTER TABLE inbody_records ADD COLUMN visceral_fat REAL;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='inbody_records' AND column_name='admin_feedback') THEN
+          ALTER TABLE inbody_records ADD COLUMN admin_feedback TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='inbody_records' AND column_name='feedback_at') THEN
+          ALTER TABLE inbody_records ADD COLUMN feedback_at TIMESTAMPTZ;
+        END IF;
       END $$;
 
       -- 마이옵티멀 로그 테이블

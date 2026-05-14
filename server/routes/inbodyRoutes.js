@@ -78,21 +78,50 @@ router.put('/:id', async (req, res) => {
         }
 
         const {
-            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, visceral_fat, notes
+            measured_at, weight, skeletal_muscle, body_fat, body_fat_pct, visceral_fat, notes,
+            admin_feedback
         } = req.body;
 
         console.log('[DEBUG] PUT InBody Request Body:', req.body);
 
         const getVal = (v) => (v === undefined || v === null || v === '') ? null : v;
 
-        await db.run(`
+        // 관리자 피드백 처리 및 검증
+        let feedbackSql = '';
+        let feedbackParams = [];
+        if (admin_feedback !== undefined) {
+            if (req.user.role !== 'admin') {
+                return res.status(403).json({ success: false, message: '피드백은 관리자만 작성할 수 있습니다.' });
+            }
+            
+            // 5대 지표 검증 (기존 값 + 새 값 조합)
+            const vWeight = getVal(weight) !== null ? getVal(weight) : existing.weight;
+            const vMuscle = getVal(skeletal_muscle) !== null ? getVal(skeletal_muscle) : existing.skeletal_muscle;
+            const vFat = getVal(body_fat) !== null ? getVal(body_fat) : existing.body_fat;
+            const vFatPct = getVal(body_fat_pct) !== null ? getVal(body_fat_pct) : existing.body_fat_pct;
+            const vVisceral = getVal(visceral_fat) !== null ? getVal(visceral_fat) : existing.visceral_fat;
+
+            if (!vWeight || !vMuscle || !vFat || !vFatPct || !vVisceral) {
+                return res.status(400).json({ success: false, message: '모든 지표(체중, 골격근, 체지방, 체지방률, 내장지방)가 입력되어야 피드백 작성이 가능합니다.' });
+            }
+            
+            feedbackSql = ', admin_feedback = $8, feedback_at = NOW()';
+            feedbackParams = [admin_feedback];
+        }
+
+        const sql = `
       UPDATE inbody_records SET
       measured_at = $1, weight = $2, skeletal_muscle = $3, body_fat = $4, body_fat_pct = $5, visceral_fat = $6, notes = $7
-      WHERE id = $8
-    `, [
+      ${feedbackSql}
+      WHERE id = ${admin_feedback !== undefined ? '$9' : '$8'}
+    `;
+
+        const params = [
             measured_at, getVal(weight), getVal(skeletal_muscle), getVal(body_fat), getVal(body_fat_pct),
-            getVal(visceral_fat), getVal(notes), req.params.id
-        ]);
+            getVal(visceral_fat), getVal(notes), ...feedbackParams, req.params.id
+        ];
+
+        await db.run(sql, params);
 
         const updated = await db.get('SELECT * FROM inbody_records WHERE id = $1', [req.params.id]);
         res.json({ success: true, data: updated });

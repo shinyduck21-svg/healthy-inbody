@@ -141,6 +141,7 @@ let revolutionStatus = null;
 const MY_ID = localStorage.getItem('mongfit_user_id');
 let revolutionLogs = [];
 let currentCalDate = new Date();
+let currentFeedbackFilter = false; // 피드백 대기 필터 상태
 
 // ===== 초기 로드 =====
 async function init() {
@@ -174,6 +175,9 @@ function filterAndRender() {
     if (currentGenderFilter !== 'all') {
         filtered = allMembers.filter(m => m.gender === currentGenderFilter);
     }
+    if (currentFeedbackFilter) {
+        filtered = filtered.filter(m => Number(m.pending_feedback_count || 0) > 0);
+    }
     renderMembers(filtered);
     updateFilterUI();
 }
@@ -181,37 +185,74 @@ function filterAndRender() {
 // ===== 필터 UI 업데이트 =====
 function updateFilterUI() {
     document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active'));
-    if (currentGenderFilter === 'all') document.getElementById('statCardTotal').classList.add('active');
-    else if (currentGenderFilter === 'M') document.getElementById('statCardMale').classList.add('active');
-    else if (currentGenderFilter === 'F') document.getElementById('statCardFemale').classList.add('active');
+    if (currentFeedbackFilter) {
+        document.getElementById('statCardPending').classList.add('active');
+    } else {
+        if (currentGenderFilter === 'all') document.getElementById('statCardTotal').classList.add('active');
+        else if (currentGenderFilter === 'M') document.getElementById('statCardMale').classList.add('active');
+        else if (currentGenderFilter === 'F') document.getElementById('statCardFemale').classList.add('active');
+    }
 }
 
 // ===== 필터 이벤트 설정 =====
 function setupFilters() {
+    document.getElementById('statCardFemale').addEventListener('click', () => {
+        currentGenderFilter = 'F';
+        currentFeedbackFilter = false;
+        filterAndRender();
+    });
     document.getElementById('statCardTotal').addEventListener('click', () => {
         currentGenderFilter = 'all';
+        currentFeedbackFilter = false;
         filterAndRender();
     });
     document.getElementById('statCardMale').addEventListener('click', () => {
         currentGenderFilter = 'M';
+        currentFeedbackFilter = false;
         filterAndRender();
     });
-    document.getElementById('statCardFemale').addEventListener('click', () => {
-        currentGenderFilter = 'F';
+    document.getElementById('statCardPending').addEventListener('click', () => {
+        currentFeedbackFilter = !currentFeedbackFilter;
         filterAndRender();
     });
 }
 
 // ===== 통계 렌더링 =====
 function renderStats(members) {
-    const male = members.filter(m => m.gender === 'M').length;
     const female = members.filter(m => m.gender === 'F').length;
     const totalRecords = members.reduce((sum, m) => sum + Number(m.record_count || 0), 0);
+    const totalPending = members.reduce((sum, m) => sum + Number(m.pending_feedback_count || 0), 0);
+    const membersWithPending = members.filter(m => Number(m.pending_feedback_count || 0) > 0).length;
 
     document.getElementById('statTotal').textContent = members.length;
     document.getElementById('statMale').textContent = male;
     document.getElementById('statFemale').textContent = female;
     document.getElementById('statRecords').textContent = totalRecords;
+    document.getElementById('statPending').textContent = totalPending;
+
+    // 알림 메시지 표시
+    const alertBox = document.getElementById('pendingFeedbackAlert');
+    if (membersWithPending > 0) {
+        alertBox.innerHTML = `
+            <div class="card" style="background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary); padding: 1rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div class="flex gap-2" style="align-items: center;">
+                    <span style="font-size: 1.5rem;">🔔</span>
+                    <div>
+                        <span style="font-weight: 800; color: var(--primary-light);">${membersWithPending}명</span>의 회원이 새로운 피드백을 기다리고 있습니다.
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="filterPendingFeedback()">목록 보기</button>
+            </div>
+        `;
+        alertBox.style.display = 'block';
+    } else {
+        alertBox.style.display = 'none';
+    }
+}
+
+function filterPendingFeedback() {
+    currentFeedbackFilter = true;
+    filterAndRender();
 }
 
 // ===== 회원 카드 렌더링 =====
@@ -243,6 +284,7 @@ function renderMembers(members) {
               <div class="member-name">
                 ${m.name}${groupTag}
                 ${(m.gender === 'F' && m.last_period_start) ? getPeriodIcon(m.last_period_start, m.last_period_end) : ''}
+                ${Number(m.pending_feedback_count || 0) > 0 ? `<span class="badge badge-error" style="margin-left:5px; animation: pulse 2s infinite;">FEEDBACK</span>` : ''}
               </div>
               <div class="member-info">${genderLabel} · ${age} · ${m.phone || '연락처 없음'}</div>
             </div>
