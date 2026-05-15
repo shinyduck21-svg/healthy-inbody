@@ -105,7 +105,7 @@ async function loadAccessLogs() {
             }
 
             tableBody.innerHTML = data.logs.map(log => {
-                const date = new Date(log.created_at).toLocaleString('ko-KR');
+                const date = safeDate(log.created_at).toLocaleString('ko-KR');
                 const userDisplay = log.user_name ? `${log.user_name}(${log.user_role})` : (log.user_role === 'admin' ? `관리자(${log.user_id})` : '비회원');
                 const ua = log.user_agent || '-';
                 const shortUA = ua.length > 30 ? ua.substring(0, 30) + '...' : ua;
@@ -145,10 +145,15 @@ let currentFeedbackFilter = false; // 피드백 대기 필터 상태
 
 // ===== 초기 로드 =====
 async function init() {
-    await loadGroups();
-    await loadMembers();
-    setupFilters();
-    if (MY_ID) await loadRevolutionStatus();
+    try {
+        await loadGroups();
+        await loadMembers();
+        setupFilters();
+        if (MY_ID) await loadRevolutionStatus();
+    } catch (err) {
+        console.error('[ERROR] Dashboard Initialization failed:', err);
+        showToast('대시보드를 불러오는 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 // ===== 회원 목록 불러오기 =====
@@ -219,6 +224,7 @@ function setupFilters() {
 
 // ===== 통계 렌더링 =====
 function renderStats(members) {
+    const male = members.filter(m => m.gender === 'M').length;
     const female = members.filter(m => m.gender === 'F').length;
     const totalRecords = members.reduce((sum, m) => sum + Number(m.record_count || 0), 0);
     const totalPending = members.reduce((sum, m) => sum + Number(m.pending_feedback_count || 0), 0);
@@ -313,8 +319,8 @@ function renderMembers(members) {
 // ===== 월경 관련 유틸리티 =====
 function getPeriodIcon(lastStart, lastEnd) {
     if (!lastStart) return '';
-    const start = new Date(lastStart);
-    const end = lastEnd ? new Date(lastEnd) : null;
+    const start = safeDate(lastStart);
+    const end = lastEnd ? safeDate(lastEnd) : null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     start.setHours(0, 0, 0, 0);
@@ -605,7 +611,7 @@ function updateRevolutionUI() {
         const calContainer = document.getElementById('revCalendarContainer');
         if (calContainer) calContainer.style.display = 'block';
 
-        const start = new Date(revolutionStatus.startDate);
+        const start = safeDate(revolutionStatus.startDate);
         const today = new Date();
         const diffTime = Math.abs(today - start);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
@@ -718,8 +724,8 @@ async function openRevMissionModal(targetDateStr) {
     if (!revolutionStatus) return;
 
     const dateStr = targetDateStr || new Date().toISOString().split('T')[0];
-    const targetDate = new Date(dateStr);
-    const startDate = new Date(revolutionStatus.startDate);
+    const targetDate = safeDate(dateStr);
+    const startDate = safeDate(revolutionStatus.startDate);
 
     // 차수 계산
     const diffTime = targetDate - startDate;

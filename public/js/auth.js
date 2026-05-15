@@ -108,11 +108,27 @@ function showToast(message, type = 'info') {
 }
 
 /**
+ * 안전한 날짜 파싱 (Safari 호환성)
+ * @param {string|Date} dateStr 
+ * @returns {Date}
+ */
+function safeDate(dateStr) {
+    if (!dateStr) return new Date();
+    if (dateStr instanceof Date) return dateStr;
+    
+    // YYYY-MM-DD HH:mm:ss 형식을 YYYY/MM/DD HH:mm:ss로 변환 (Safari 대응)
+    const normalized = dateStr.replace(/-/g, '/');
+    return new Date(normalized);
+}
+
+/**
  * 날짜 포맷 (YYYY-MM-DD → YYYY.MM.DD)
  */
 function formatDate(dateStr) {
     if (!dateStr) return '-';
-    return dateStr.substring(0, 10).replace(/-/g, '.');
+    // 문자열인 경우 앞 10자만 사용
+    const str = typeof dateStr === 'string' ? dateStr : new Date(dateStr).toISOString();
+    return str.substring(0, 10).replace(/-/g, '.');
 }
 
 /**

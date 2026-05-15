@@ -58,13 +58,18 @@ let editingMenstruationId = null; // 현재 수정 중인 월경 기록 ID
 
 // ===== 초기화 =====
 async function init() {
-    await Promise.all([
-        loadMember(),
-        loadRecords(),
-        loadRevolutionStatus(),
-        loadGroups(),
-        loadMenstruationHistory()
-    ]);
+    try {
+        await Promise.all([
+            loadMember(),
+            loadRecords(),
+            loadRevolutionStatus(),
+            loadGroups(),
+            loadMenstruationHistory()
+        ]);
+    } catch (err) {
+        console.error('[ERROR] Member Page Initialization failed:', err);
+        showToast('페이지 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+    }
 }
 
 // ===== 회원 정보 로드 =====
@@ -1287,8 +1292,8 @@ function renderRevCalendar() {
                 if (endStr && dateStr <= endStr) isPeriodDay = true;
                 else if (!endStr) {
                     // 종료일이 없는 경우, 오늘이 시작일 이후 7일 이내면 표시
-                    const start = new Date(startStr);
-                    const current = new Date(dateStr);
+                    const start = safeDate(startStr);
+                    const current = safeDate(dateStr);
                     const diff = Math.round((current - start) / (1000 * 60 * 60 * 24));
                     if (diff >= 0 && diff < 7) isPeriodDay = true;
                 }
@@ -1410,16 +1415,16 @@ function renderMenstruationUI() {
 function calculateNextPeriod() {
     if (menstruationHistory.length === 0) return { nextDate: null, avgCycle: null, avgDuration: null };
 
-    const sorted = [...menstruationHistory].sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-    const latestDate = new Date(sorted[sorted.length - 1].start_date);
+    const sorted = [...menstruationHistory].sort((a, b) => safeDate(a.start_date) - safeDate(b.start_date));
+    const latestDate = safeDate(sorted[sorted.length - 1].start_date);
 
     // 평균 월경 기간 계산 (duration)
     let totalDuration = 0;
     let durationCount = 0;
     sorted.forEach(h => {
         if (h.start_date && h.end_date) {
-            const d1 = new Date(h.start_date);
-            const d2 = new Date(h.end_date);
+            const d1 = safeDate(h.start_date);
+            const d2 = safeDate(h.end_date);
             totalDuration += Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
             durationCount++;
         }
@@ -1434,8 +1439,8 @@ function calculateNextPeriod() {
 
     let totalDays = 0;
     for (let i = 1; i < sorted.length; i++) {
-        const d1 = new Date(sorted[i - 1].start_date);
-        const d2 = new Date(sorted[i].start_date);
+        const d1 = safeDate(sorted[i - 1].start_date);
+        const d2 = safeDate(sorted[i].start_date);
         totalDays += Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
     }
 
@@ -1458,8 +1463,8 @@ function renderMenstruationModalList() {
     list.innerHTML = menstruationHistory.map(log => {
         let durationText = '';
         if (log.start_date && log.end_date) {
-            const d1 = new Date(log.start_date);
-            const d2 = new Date(log.end_date);
+            const d1 = safeDate(log.start_date);
+            const d2 = safeDate(log.end_date);
             const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
             durationText = `<span style="font-size:0.8rem; color:var(--text-muted); margin-left:5px;">(${diff}일간)</span>`;
         }
