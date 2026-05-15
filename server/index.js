@@ -19,7 +19,22 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// 정적 파일 서빙 (JS/CSS는 캐시 방지, 나머지는 1시간 캐시)
+app.use('/js', express.static(path.join(__dirname, '..', 'public', 'js'), {
+    setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+}));
+app.use('/css', express.static(path.join(__dirname, '..', 'public', 'css'), {
+    setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+}));
+app.use(express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h' }));
 
 // 접속 로그 미들웨어 적용
 const accessLogger = require('./middleware/logger');

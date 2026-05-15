@@ -16,7 +16,14 @@ router.get('/', async (req, res) => {
             SELECT m.*, g.name as group_name, 
             (SELECT COUNT(*) FROM inbody_records WHERE member_id = m.id) as record_count,
             (SELECT MAX(measured_at) FROM inbody_records WHERE member_id = m.id) as last_measured,
-            (SELECT COUNT(*) FROM inbody_records WHERE member_id = m.id AND (admin_feedback IS NULL OR TRIM(admin_feedback) = '')) as pending_feedback_count,
+            (SELECT COUNT(*) FROM inbody_records 
+             WHERE member_id = m.id 
+             AND weight IS NOT NULL 
+             AND skeletal_muscle IS NOT NULL 
+             AND body_fat IS NOT NULL 
+             AND body_fat_pct IS NOT NULL 
+             AND visceral_fat IS NOT NULL
+             AND (admin_feedback IS NULL OR TRIM(admin_feedback) = '')) as pending_feedback_count,
             (SELECT mh.start_date FROM menstruation_history mh WHERE mh.member_id = m.id ORDER BY mh.start_date DESC LIMIT 1) as last_period_start,
             (SELECT mh.end_date FROM menstruation_history mh WHERE mh.member_id = m.id ORDER BY mh.start_date DESC LIMIT 1) as last_period_end
             FROM members m
