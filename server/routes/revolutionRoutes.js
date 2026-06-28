@@ -56,6 +56,35 @@ async function uploadMealPhotoToStorage(objectPath, buffer, mimeType) {
     return `${supabaseUrl}/storage/v1/object/public/${bucket}/${encodedPath}`;
 }
 
+function getStorageObjectPathFromPublicUrl(photoUrl) {
+    if (!photoUrl) return null;
+    const { supabaseUrl, bucket } = getSupabaseStorageConfig();
+    const publicPrefix = `${supabaseUrl}/storage/v1/object/public/${bucket}/`;
+    if (!photoUrl.startsWith(publicPrefix)) return null;
+    return photoUrl.slice(publicPrefix.length).split('/').map(decodeURIComponent).join('/');
+}
+
+async function deleteMealPhotoFromStorage(photoUrl) {
+    const objectPath = getStorageObjectPathFromPublicUrl(photoUrl);
+    if (!objectPath) return;
+
+    const { supabaseUrl, serviceRoleKey, bucket } = getSupabaseStorageConfig();
+    const response = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}`, {
+        method: 'DELETE',
+        headers: {
+            apikey: serviceRoleKey,
+            Authorization: `Bearer ${serviceRoleKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prefixes: [objectPath] })
+    });
+
+    if (!response.ok) {
+        const detail = await response.text();
+        console.warn(`Supabase Storage 기존 사진 삭제 실패(${response.status}): ${detail}`);
+    }
+}
+
 // POST /api/revolution/start - 프로그램 시작
 router.post('/start', authenticate, async (req, res) => {
     try {
@@ -213,7 +242,7 @@ router.post('/log', authenticate, async (req, res) => {
 // POST /api/revolution/meal-photo - 식단 사진 업로드
 router.post('/meal-photo', authenticate, async (req, res) => {
     try {
-        const { memberId, date, meal, fileName, mimeType, data } = req.body;
+        const { memberId, date, meal, fileName, mimeType, data, previousPhotoUrl } = req.body;
         if (!memberId || !date || !meal || !mimeType || !data) {
             return res.status(400).json({ success: false, message: '필수 정보가 누락되었습니다.' });
         }
@@ -244,6 +273,9 @@ router.post('/meal-photo', authenticate, async (req, res) => {
         const objectPath = `revolution/${memberId}/${storedName}`;
         const photoUrl = await uploadMealPhotoToStorage(objectPath, buffer, mimeType);
         const photoField = MEAL_PHOTO_FIELDS[meal];
+        if (previousPhotoUrl && previousPhotoUrl !== photoUrl) {
+            await deleteMealPhotoFromStorage(previousPhotoUrl);
+        }
         await db.run(`
             INSERT INTO revolution_logs (member_id, date, ${photoField})
             VALUES ($1, $2, $3)

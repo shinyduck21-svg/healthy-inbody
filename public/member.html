@@ -497,43 +497,31 @@
                     <span class="mission-section-icon">🍽️</span>
                     <h3 class="mission-section-title" style="color:#fbbf24;">식단</h3>
                 </div>
-                <div class="mission-checks-row">
-                    <label class="mission-check-label">
-                        <input type="checkbox" id="msDietBreakfast" class="form-checkbox">
-                        <span>🌅 아침</span>
-                    </label>
-                    <label class="mission-check-label">
-                        <input type="checkbox" id="msDietLunch" class="form-checkbox">
-                        <span>☀️ 점심</span>
-                    </label>
-                    <label class="mission-check-label">
-                        <input type="checkbox" id="msDietDinner" class="form-checkbox">
-                        <span>🌙 저녁</span>
-                    </label>
+                <div class="meal-photo-grid">
+                    <button type="button" class="meal-photo-field" onclick="document.getElementById('msDietBreakfastPhoto').click()">
+                        <span class="meal-photo-label">🌅 아침</span>
+                        <input type="hidden" id="msDietBreakfastPhotoUrl">
+                        <input type="file" id="msDietBreakfastPhoto" accept="image/*" hidden onchange="uploadMealPhoto('breakfast', this)" onclick="event.stopPropagation()">
+                        <div id="msDietBreakfastPhotoPreview" class="meal-photo-preview"></div>
+                    </button>
+                    <button type="button" class="meal-photo-field" onclick="document.getElementById('msDietLunchPhoto').click()">
+                        <span class="meal-photo-label">☀️ 점심</span>
+                        <input type="hidden" id="msDietLunchPhotoUrl">
+                        <input type="file" id="msDietLunchPhoto" accept="image/*" hidden onchange="uploadMealPhoto('lunch', this)" onclick="event.stopPropagation()">
+                        <div id="msDietLunchPhotoPreview" class="meal-photo-preview"></div>
+                    </button>
+                    <button type="button" class="meal-photo-field" onclick="document.getElementById('msDietDinnerPhoto').click()">
+                        <span class="meal-photo-label">🌙 저녁</span>
+                        <input type="hidden" id="msDietDinnerPhotoUrl">
+                        <input type="file" id="msDietDinnerPhoto" accept="image/*" hidden onchange="uploadMealPhoto('dinner', this)" onclick="event.stopPropagation()">
+                        <div id="msDietDinnerPhotoPreview" class="meal-photo-preview"></div>
+                    </button>
+                </div>
+                <div class="mission-checks-row mt-2">
                     <label class="mission-check-label">
                         <input type="checkbox" id="msDietFasting" class="form-checkbox">
                         <span>⏱️ 단식</span>
                     </label>
-                </div>
-                <div class="meal-photo-grid">
-                    <div class="meal-photo-field">
-                        <input type="hidden" id="msDietBreakfastPhotoUrl">
-                        <input type="file" id="msDietBreakfastPhoto" accept="image/*" hidden onchange="uploadMealPhoto('breakfast', this)">
-                        <button type="button" class="meal-photo-btn" onclick="document.getElementById('msDietBreakfastPhoto').click()">아침 사진</button>
-                        <div id="msDietBreakfastPhotoPreview" class="meal-photo-preview"></div>
-                    </div>
-                    <div class="meal-photo-field">
-                        <input type="hidden" id="msDietLunchPhotoUrl">
-                        <input type="file" id="msDietLunchPhoto" accept="image/*" hidden onchange="uploadMealPhoto('lunch', this)">
-                        <button type="button" class="meal-photo-btn" onclick="document.getElementById('msDietLunchPhoto').click()">점심 사진</button>
-                        <div id="msDietLunchPhotoPreview" class="meal-photo-preview"></div>
-                    </div>
-                    <div class="meal-photo-field">
-                        <input type="hidden" id="msDietDinnerPhotoUrl">
-                        <input type="file" id="msDietDinnerPhoto" accept="image/*" hidden onchange="uploadMealPhoto('dinner', this)">
-                        <button type="button" class="meal-photo-btn" onclick="document.getElementById('msDietDinnerPhoto').click()">저녁 사진</button>
-                        <div id="msDietDinnerPhotoPreview" class="meal-photo-preview"></div>
-                    </div>
                 </div>
                 <div class="mission-field mt-2">
                     <label class="mission-label">식단 메모</label>

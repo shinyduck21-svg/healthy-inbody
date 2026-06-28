@@ -1048,9 +1048,6 @@ function openMissionPanel(dateStr) {
     document.getElementById('msSleepScore').value = log.sleep_score ?? '';
 
     // 식단
-    document.getElementById('msDietBreakfast').checked = !!log.diet_breakfast;
-    document.getElementById('msDietLunch').checked = !!log.diet_lunch;
-    document.getElementById('msDietDinner').checked = !!log.diet_dinner;
     document.getElementById('msDietFasting').checked = !!log.diet_fasting;
     setMealPhotoPreview('breakfast', log.diet_breakfast_photo_url || '');
     setMealPhotoPreview('lunch', log.diet_lunch_photo_url || '');
@@ -1110,7 +1107,10 @@ function setMealPhotoPreview(meal, photoUrl) {
     const image = document.createElement('img');
     image.src = photoUrl;
     image.alt = `${meal} meal photo`;
-    image.addEventListener('click', () => openMealPhotoModal(photoUrl));
+    image.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openMealPhotoModal(photoUrl);
+    });
     previewEl.appendChild(image);
 }
 
@@ -1195,6 +1195,7 @@ async function uploadMealPhoto(meal, input) {
     try {
         const compressed = await resizeMealPhoto(file);
         const data = await readBlobAsBase64(compressed);
+        const previousPhotoUrl = document.getElementById(MEAL_PHOTO_CONFIG[meal].urlId)?.value || null;
         const res = await apiFetch('/api/revolution/meal-photo', {
             method: 'POST',
             body: JSON.stringify({
@@ -1203,6 +1204,7 @@ async function uploadMealPhoto(meal, input) {
                 meal,
                 fileName: file.name.replace(/\.[^.]+$/, '') + '.jpg',
                 mimeType: 'image/jpeg',
+                previousPhotoUrl,
                 data
             })
         });
@@ -1228,9 +1230,9 @@ async function saveMissionLog() {
         sleep_start: document.getElementById('msSleepStart').value || null,
         sleep_end: document.getElementById('msSleepEnd').value || null,
         sleep_score: parseInt(document.getElementById('msSleepScore').value) || null,
-        diet_breakfast: document.getElementById('msDietBreakfast').checked,
-        diet_lunch: document.getElementById('msDietLunch').checked,
-        diet_dinner: document.getElementById('msDietDinner').checked,
+        diet_breakfast: false,
+        diet_lunch: false,
+        diet_dinner: false,
         diet_fasting: document.getElementById('msDietFasting').checked,
         diet_breakfast_photo_url: document.getElementById('msDietBreakfastPhotoUrl').value || null,
         diet_lunch_photo_url: document.getElementById('msDietLunchPhotoUrl').value || null,

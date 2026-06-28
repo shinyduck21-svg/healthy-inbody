@@ -2210,21 +2210,24 @@ canvas {
     flex-direction: column;
     gap: 0.45rem;
     min-width: 0;
-}
-.meal-photo-btn {
+    width: 100%;
     border: 1px solid rgba(245, 158, 11, 0.35);
     background: rgba(245, 158, 11, 0.1);
-    color: #d97706;
     border-radius: 8px;
-    padding: 0.5rem 0.65rem;
-    font-size: 0.82rem;
-    font-weight: 700;
+    padding: 0.65rem;
     cursor: pointer;
     transition: var(--transition);
+    text-align: center;
 }
-.meal-photo-btn:hover {
+.meal-photo-field:hover {
     border-color: #f59e0b;
     background: rgba(245, 158, 11, 0.18);
+}
+.meal-photo-label {
+    color: #d97706;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.2;
 }
 .meal-photo-preview {
     min-height: 34px;
@@ -2251,6 +2254,9 @@ canvas {
 }
 .meal-photo-modal {
     max-width: min(920px, 94vw);
+}
+#mealPhotoModal {
+    z-index: 900;
 }
 .meal-photo-modal-body {
     padding: 0;
