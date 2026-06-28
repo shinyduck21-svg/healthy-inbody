@@ -57,6 +57,24 @@ let menstruationHistory = []; // 월경 이력 데이터
 let editingMenstruationId = null; // 현재 수정 중인 월경 기록 ID
 
 // ===== 초기화 =====
+const MEAL_PHOTO_CONFIG = {
+    breakfast: {
+        inputId: 'msDietBreakfastPhoto',
+        urlId: 'msDietBreakfastPhotoUrl',
+        previewId: 'msDietBreakfastPhotoPreview'
+    },
+    lunch: {
+        inputId: 'msDietLunchPhoto',
+        urlId: 'msDietLunchPhotoUrl',
+        previewId: 'msDietLunchPhotoPreview'
+    },
+    dinner: {
+        inputId: 'msDietDinnerPhoto',
+        urlId: 'msDietDinnerPhotoUrl',
+        previewId: 'msDietDinnerPhotoPreview'
+    }
+};
+
 async function init() {
     try {
         await Promise.all([
@@ -1033,6 +1051,10 @@ function openMissionPanel(dateStr) {
     document.getElementById('msDietBreakfast').checked = !!log.diet_breakfast;
     document.getElementById('msDietLunch').checked = !!log.diet_lunch;
     document.getElementById('msDietDinner').checked = !!log.diet_dinner;
+    document.getElementById('msDietFasting').checked = !!log.diet_fasting;
+    setMealPhotoPreview('breakfast', log.diet_breakfast_photo_url || '');
+    setMealPhotoPreview('lunch', log.diet_lunch_photo_url || '');
+    setMealPhotoPreview('dinner', log.diet_dinner_photo_url || '');
     document.getElementById('msDietMemo').value = log.diet_memo || '';
 
     // 물 섭취
@@ -1074,6 +1096,131 @@ function updateWaterDisplay() {
     dotsEl.innerHTML = html;
 }
 
+function setMealPhotoPreview(meal, photoUrl) {
+    const config = MEAL_PHOTO_CONFIG[meal];
+    if (!config) return;
+    const urlEl = document.getElementById(config.urlId);
+    const previewEl = document.getElementById(config.previewId);
+    const inputEl = document.getElementById(config.inputId);
+    if (urlEl) urlEl.value = photoUrl || '';
+    if (inputEl) inputEl.value = '';
+    if (!previewEl) return;
+    previewEl.innerHTML = '';
+    if (!photoUrl) return;
+    const image = document.createElement('img');
+    image.src = photoUrl;
+    image.alt = `${meal} meal photo`;
+    image.addEventListener('click', () => openMealPhotoModal(photoUrl));
+    previewEl.appendChild(image);
+}
+
+function openMealPhotoModal(photoUrl) {
+    const modal = document.getElementById('mealPhotoModal');
+    const image = document.getElementById('mealPhotoModalImage');
+    if (!modal || !image) return;
+    image.src = photoUrl;
+    modal.classList.add('active');
+}
+
+function closeMealPhotoModal() {
+    const modal = document.getElementById('mealPhotoModal');
+    const image = document.getElementById('mealPhotoModalImage');
+    if (image) image.src = '';
+    if (modal) modal.classList.remove('active');
+}
+
+function readBlobAsBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+function loadImageFromBlob(blob) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(blob);
+        const image = new Image();
+        image.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(image);
+        };
+        image.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('이미지를 불러올 수 없습니다.'));
+        };
+        image.src = url;
+    });
+}
+
+async function resizeMealPhoto(file) {
+    const maxSize = 1600;
+    const quality = 0.82;
+    const image = await loadImageFromBlob(file);
+    const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+    const width = Math.max(1, Math.round(image.width * scale));
+    const height = Math.max(1, Math.round(image.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(image, 0, 0, width, height);
+
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                reject(new Error('이미지 압축에 실패했습니다.'));
+                return;
+            }
+            resolve(blob);
+        }, 'image/jpeg', quality);
+    });
+}
+
+async function uploadMealPhoto(meal, input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        showToast('이미지 파일만 업로드할 수 있습니다.', 'error');
+        input.value = '';
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('사진은 10MB 이하만 업로드할 수 있습니다.', 'error');
+        input.value = '';
+        return;
+    }
+
+    try {
+        const compressed = await resizeMealPhoto(file);
+        const data = await readBlobAsBase64(compressed);
+        const res = await apiFetch('/api/revolution/meal-photo', {
+            method: 'POST',
+            body: JSON.stringify({
+                memberId: MEMBER_ID,
+                date: currentMissionDate,
+                meal,
+                fileName: file.name.replace(/\.[^.]+$/, '') + '.jpg',
+                mimeType: 'image/jpeg',
+                data
+            })
+        });
+        if (!res) return;
+        const result = await res.json();
+        if (result.success) {
+            setMealPhotoPreview(meal, result.photoUrl);
+            showToast('사진이 업로드되었습니다.', 'success');
+        } else {
+            showToast(result.message || '사진 업로드에 실패했습니다.', 'error');
+            input.value = '';
+        }
+    } catch (err) {
+        showToast('사진 업로드 중 오류가 발생했습니다.', 'error');
+        input.value = '';
+    }
+}
+
 async function saveMissionLog() {
     const body = {
         memberId: MEMBER_ID,
@@ -1084,6 +1231,10 @@ async function saveMissionLog() {
         diet_breakfast: document.getElementById('msDietBreakfast').checked,
         diet_lunch: document.getElementById('msDietLunch').checked,
         diet_dinner: document.getElementById('msDietDinner').checked,
+        diet_fasting: document.getElementById('msDietFasting').checked,
+        diet_breakfast_photo_url: document.getElementById('msDietBreakfastPhotoUrl').value || null,
+        diet_lunch_photo_url: document.getElementById('msDietLunchPhotoUrl').value || null,
+        diet_dinner_photo_url: document.getElementById('msDietDinnerPhotoUrl').value || null,
         diet_memo: document.getElementById('msDietMemo').value.trim() || null,
         water_cups: currentWaterCups,
         exercise_type: document.getElementById('msExerciseType').value.trim() || null,

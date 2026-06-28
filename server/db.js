@@ -96,6 +96,10 @@ async function initDB() {
         diet_breakfast BOOLEAN DEFAULT FALSE,
         diet_lunch BOOLEAN DEFAULT FALSE,
         diet_dinner BOOLEAN DEFAULT FALSE,
+        diet_fasting BOOLEAN DEFAULT FALSE,
+        diet_breakfast_photo_url TEXT,
+        diet_lunch_photo_url TEXT,
+        diet_dinner_photo_url TEXT,
         diet_memo TEXT,
         water_cups INTEGER DEFAULT 0,
         exercise_type TEXT,
@@ -139,6 +143,18 @@ async function initDB() {
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_dinner') THEN
           ALTER TABLE revolution_logs ADD COLUMN diet_dinner BOOLEAN DEFAULT FALSE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_fasting') THEN
+          ALTER TABLE revolution_logs ADD COLUMN diet_fasting BOOLEAN DEFAULT FALSE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_breakfast_photo_url') THEN
+          ALTER TABLE revolution_logs ADD COLUMN diet_breakfast_photo_url TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_lunch_photo_url') THEN
+          ALTER TABLE revolution_logs ADD COLUMN diet_lunch_photo_url TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_dinner_photo_url') THEN
+          ALTER TABLE revolution_logs ADD COLUMN diet_dinner_photo_url TEXT;
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_memo') THEN
           ALTER TABLE revolution_logs ADD COLUMN diet_memo TEXT;

@@ -3,6 +3,59 @@ const router = express.Router();
 const db = require('../db');
 const { authenticate } = require('../auth');
 
+const MEAL_PHOTO_FIELDS = {
+    breakfast: 'diet_breakfast_photo_url',
+    lunch: 'diet_lunch_photo_url',
+    dinner: 'diet_dinner_photo_url'
+};
+
+function getMealPhotoExt(mimeType) {
+    const allowed = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/gif': 'gif'
+    };
+    return allowed[mimeType] || null;
+}
+
+function getSupabaseStorageConfig() {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'meal-photos';
+    if (!supabaseUrl || !serviceRoleKey) {
+        throw new Error('Supabase Storage 환경변수(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)를 확인해주세요.');
+    }
+    return {
+        supabaseUrl: supabaseUrl.replace(/\/$/, ''),
+        serviceRoleKey,
+        bucket
+    };
+}
+
+async function uploadMealPhotoToStorage(objectPath, buffer, mimeType) {
+    const { supabaseUrl, serviceRoleKey, bucket } = getSupabaseStorageConfig();
+    const encodedPath = objectPath.split('/').map(encodeURIComponent).join('/');
+    const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucket}/${encodedPath}`;
+    const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+            apikey: serviceRoleKey,
+            Authorization: `Bearer ${serviceRoleKey}`,
+            'Content-Type': mimeType,
+            'x-upsert': 'false'
+        },
+        body: buffer
+    });
+
+    if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(`Supabase Storage 업로드 실패(${response.status}): ${detail}`);
+    }
+
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${encodedPath}`;
+}
+
 // POST /api/revolution/start - 프로그램 시작
 router.post('/start', authenticate, async (req, res) => {
     try {
@@ -73,6 +126,10 @@ router.get('/status/:memberId', authenticate, async (req, res) => {
                 diet_breakfast: false,
                 diet_lunch: false,
                 diet_dinner: false,
+                diet_fasting: false,
+                diet_breakfast_photo_url: '',
+                diet_lunch_photo_url: '',
+                diet_dinner_photo_url: '',
                 diet_memo: '',
                 water_cups: 0,
                 exercise_type: '',
@@ -94,7 +151,9 @@ router.post('/log', authenticate, async (req, res) => {
         const {
             memberId, date,
             sleep_start, sleep_end, sleep_score,
-            diet_breakfast, diet_lunch, diet_dinner, diet_memo,
+            diet_breakfast, diet_lunch, diet_dinner, diet_fasting,
+            diet_breakfast_photo_url, diet_lunch_photo_url, diet_dinner_photo_url,
+            diet_memo,
             water_cups,
             exercise_type, exercise_duration, exercise_intensity,
             gratitude_diary
@@ -108,12 +167,14 @@ router.post('/log', authenticate, async (req, res) => {
             INSERT INTO revolution_logs (
                 member_id, date,
                 sleep_start, sleep_end, sleep_score,
-                diet_breakfast, diet_lunch, diet_dinner, diet_memo,
+                diet_breakfast, diet_lunch, diet_dinner, diet_fasting,
+                diet_breakfast_photo_url, diet_lunch_photo_url, diet_dinner_photo_url,
+                diet_memo,
                 water_cups,
                 exercise_type, exercise_duration, exercise_intensity,
                 gratitude_diary
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
             ON CONFLICT (member_id, date) DO UPDATE SET
                 sleep_start = EXCLUDED.sleep_start,
                 sleep_end = EXCLUDED.sleep_end,
@@ -121,6 +182,10 @@ router.post('/log', authenticate, async (req, res) => {
                 diet_breakfast = EXCLUDED.diet_breakfast,
                 diet_lunch = EXCLUDED.diet_lunch,
                 diet_dinner = EXCLUDED.diet_dinner,
+                diet_fasting = EXCLUDED.diet_fasting,
+                diet_breakfast_photo_url = EXCLUDED.diet_breakfast_photo_url,
+                diet_lunch_photo_url = EXCLUDED.diet_lunch_photo_url,
+                diet_dinner_photo_url = EXCLUDED.diet_dinner_photo_url,
                 diet_memo = EXCLUDED.diet_memo,
                 water_cups = EXCLUDED.water_cups,
                 exercise_type = EXCLUDED.exercise_type,
@@ -130,7 +195,9 @@ router.post('/log', authenticate, async (req, res) => {
         `, [
             memberId, date,
             sleep_start, sleep_end, sleep_score,
-            diet_breakfast, diet_lunch, diet_dinner, diet_memo,
+            diet_breakfast, diet_lunch, diet_dinner, diet_fasting,
+            diet_breakfast_photo_url, diet_lunch_photo_url, diet_dinner_photo_url,
+            diet_memo,
             water_cups,
             exercise_type, exercise_duration, exercise_intensity,
             gratitude_diary
@@ -140,6 +207,54 @@ router.post('/log', authenticate, async (req, res) => {
     } catch (err) {
         console.error('로그 기록 오류:', err);
         res.status(500).json({ success: false, message: '서버 오류' });
+    }
+});
+
+// POST /api/revolution/meal-photo - 식단 사진 업로드
+router.post('/meal-photo', authenticate, async (req, res) => {
+    try {
+        const { memberId, date, meal, fileName, mimeType, data } = req.body;
+        if (!memberId || !date || !meal || !mimeType || !data) {
+            return res.status(400).json({ success: false, message: '필수 정보가 누락되었습니다.' });
+        }
+        if (!MEAL_PHOTO_FIELDS[meal]) {
+            return res.status(400).json({ success: false, message: '지원하지 않는 식단 항목입니다.' });
+        }
+        if (req.user.role !== 'admin' && req.user.id !== parseInt(memberId)) {
+            return res.status(403).json({ success: false, message: '권한이 없습니다.' });
+        }
+
+        const ext = getMealPhotoExt(mimeType);
+        if (!ext) {
+            return res.status(400).json({ success: false, message: '이미지 파일만 업로드할 수 있습니다.' });
+        }
+
+        const buffer = Buffer.from(data, 'base64');
+        if (buffer.length > 10 * 1024 * 1024) {
+            return res.status(400).json({ success: false, message: '사진은 10MB 이하만 업로드할 수 있습니다.' });
+        }
+
+        const safeDate = String(date).replace(/[^0-9-]/g, '');
+        const safeMeal = String(meal).replace(/[^a-z]/g, '');
+        const originalName = String(fileName || 'meal')
+            .replace(/\.[^.]+$/, '')
+            .replace(/[^a-zA-Z0-9_-]/g, '')
+            .slice(0, 30) || 'meal';
+        const storedName = `${safeDate}-${safeMeal}-${Date.now()}-${originalName}.${ext}`;
+        const objectPath = `revolution/${memberId}/${storedName}`;
+        const photoUrl = await uploadMealPhotoToStorage(objectPath, buffer, mimeType);
+        const photoField = MEAL_PHOTO_FIELDS[meal];
+        await db.run(`
+            INSERT INTO revolution_logs (member_id, date, ${photoField})
+            VALUES ($1, $2, $3)
+            ON CONFLICT (member_id, date) DO UPDATE SET
+                ${photoField} = EXCLUDED.${photoField}
+        `, [memberId, date, photoUrl]);
+
+        res.json({ success: true, photoUrl });
+    } catch (err) {
+        console.error('식단 사진 업로드 오류:', err.message);
+        res.status(500).json({ success: false, message: err.message || '서버 오류' });
     }
 });
 

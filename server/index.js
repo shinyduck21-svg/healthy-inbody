@@ -17,8 +17,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 // 정적 파일 서빙 (JS/CSS는 캐시 방지, 나머지는 1시간 캐시)
 app.use('/js', express.static(path.join(__dirname, '..', 'public', 'js'), {
     setHeaders: (res) => {
@@ -34,6 +34,7 @@ app.use('/css', express.static(path.join(__dirname, '..', 'public', 'css'), {
         res.setHeader('Expires', '0');
     }
 }));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads'), { maxAge: '1h' }));
 app.use(express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h' }));
 
 // 접속 로그 미들웨어 적용
