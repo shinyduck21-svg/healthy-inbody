@@ -1795,9 +1795,489 @@ canvas {
   padding: 0.6rem 1rem;
   border-radius: 8px;
   display: inline-block;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+}
+
+.rev-cal-day:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.rev-cal-day.today {
+  border: 2px solid var(--primary);
+  background: rgba(99, 102, 241, 0.08); /* var(--primary) 기반 연한 파랑 */
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+}
+
+.rev-cal-day.today::after {
+  content: 'TODAY';
+  position: absolute;
+  top: -8px;
+  font-size: 0.5rem;
+  background: var(--primary);
+  color: white;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 900;
+  z-index: 2;
+}
+
+.rev-cal-day.other-month {
+  opacity: 0.1;
+  cursor: default;
+  pointer-events: none;
+  background: none;
+}
+
+.rev-cal-day.has-log {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(255, 150, 100, 0.25));
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
+}
+
+.rev-cal-day.missed {
+  background: rgba(148, 163, 184, 0.15); /* var(--text-muted) 기반 회색 */
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+
+.rev-cal-day.start-day::after {
+  content: 'START';
+  position: absolute;
+  top: -8px;
+  font-size: 0.5rem;
+  background: #ff4d4d;
+  color: white;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 900;
+  z-index: 2;
+}
+
+.rev-cal-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  position: absolute;
+  bottom: 8px;
+  box-shadow: 0 0 8px var(--primary);
+}
+
+.rev-cal-dot.active {
+  animation: pulse-dot 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4);
+  }
+
+  70% {
+    transform: scale(1.4);
+    opacity: 0.7;
+    box-shadow: 0 0 0 6px rgba(255, 107, 107, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+  }
+}
+
+.period-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.7rem;
+  z-index: 5;
+  filter: drop-shadow(0 0 2px rgba(255, 107, 107, 0.5));
+}
+
+.period-dot.predicted {
+  opacity: 0.5;
+  filter: grayscale(100%) opacity(0.7);
+}
+
+.btn-xs {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* ===== 인바디 피드백 스타일 ===== */
+.record-row-content {
+  border-bottom: 1px solid var(--glass-border);
+  transition: var(--transition);
+}
+
+.record-row-content:hover {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.feedback-area {
+  border-radius: 12px;
+  padding: 1rem;
+  font-size: 0.9rem;
+}
+
+.feedback-area.admin-side {
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px dashed var(--primary-light);
+}
+
+.feedback-area.user-side {
+  background: var(--bg-card-hover);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.feedback-title {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.85rem;
+}
+
+.feedback-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.feedback-content {
+  color: var(--text-primary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.feedback-input {
+  background: white;
+  border: 1px solid var(--glass-border);
+  font-size: 0.85rem;
+  min-height: 60px;
+}
+
+.feedback-guide {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: rgba(0,0,0,0.03);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  display: inline-block;
 }
 @keyframes pulse {
   0% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.05); opacity: 0.8; }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* ===== 랜딩 - 5개 카테고리 ===== */
+.features {
+    padding: 4rem 0 5rem;
+}
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.category-tag {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--primary-light);
+    border-left: 3px solid var(--primary);
+    padding-left: 0.6rem;
+}
+.category-title {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 800;
+    color: var(--text-primary);
+}
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-width: 760px;
+    margin: 0 auto;
+}
+.category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 1.1rem 1.4rem;
+    transition: var(--transition);
+}
+.category-item:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow);
+}
+.category-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.category-icon-emoji {
+    font-size: 1.6rem;
+    width: 2.4rem;
+    text-align: center;
+}
+.category-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.1rem;
+}
+.category-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+.category-badge-color {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 8px;
+    font-family: monospace;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+
+/* ===== 사이드 패널 오버레이 ===== */
+.mission-panel-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px);
+    z-index: 800;
+}
+.mission-panel-overlay.active {
+    display: block;
+}
+
+/* ===== 사이드 패널 본체 ===== */
+.mission-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 420px;
+    max-width: 95vw;
+    background: var(--bg-surface);
+    border-left: 1px solid var(--glass-border);
+    box-shadow: -8px 0 40px rgba(0,0,0,0.18);
+    z-index: 801;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mission-panel.active {
+    transform: translateX(0);
+}
+.mission-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    flex-shrink: 0;
+}
+.mission-panel-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.15rem;
+}
+.mission-panel-date {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+.mission-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+.mission-panel-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--glass-border);
+    background: var(--bg-surface);
+    flex-shrink: 0;
+}
+
+/* ===== 미션 섹션 카드 ===== */
+.mission-section {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem;
+    padding-left: calc(1.2rem - 4px);
+}
+.mission-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+.mission-section-icon {
+    font-size: 1.3rem;
+}
+.mission-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+}
+.mission-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+}
+.mission-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.mission-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+}
+.mission-input {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+}
+.mission-checks-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.mission-check-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.4rem 0.75rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    transition: var(--transition);
+}
+.mission-check-label:hover {
+    border-color: var(--primary);
+    background: var(--bg-card-hover);
+}
+.mission-check-label input:checked ~ span {
+    color: var(--primary-light);
+}
+.mission-char-count {
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* ===== 물 섭취 카운터 ===== */
+.mission-water-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+.mission-water-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+.mission-water-count {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #60a5fa;
+    line-height: 1;
+}
+.mission-water-label {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.mission-water-dots {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.water-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.15);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    transition: var(--transition);
+}
+.water-dot.filled {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    box-shadow: 0 0 6px rgba(59,130,246,0.5);
+}
+
+/* ===== 달력 cell에 미션 완료 점 아이콘 ===== */
+.rev-cal-day.has-log .rev-cal-dot {
+    background: var(--success);
+}
+
+/* ===== mt-2 helper ===== */
+.mt-2 {
+    margin-top: 0.75rem;
+}
+
+@media (max-width: 480px) {
+    .mission-panel {
+        width: 100vw;
+    }
+    .mission-form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .category-item {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
 }

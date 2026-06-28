@@ -90,6 +90,18 @@ async function initDB() {
         id SERIAL PRIMARY KEY,
         member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
         date TEXT NOT NULL,
+        sleep_start TEXT,
+        sleep_end TEXT,
+        sleep_score INTEGER,
+        diet_breakfast BOOLEAN DEFAULT FALSE,
+        diet_lunch BOOLEAN DEFAULT FALSE,
+        diet_dinner BOOLEAN DEFAULT FALSE,
+        diet_memo TEXT,
+        water_cups INTEGER DEFAULT 0,
+        exercise_type TEXT,
+        exercise_duration INTEGER DEFAULT 0,
+        exercise_intensity TEXT,
+        gratitude_diary TEXT,
         shake_count INTEGER DEFAULT 0,
         hiit_done BOOLEAN DEFAULT FALSE,
         no_sugar BOOLEAN DEFAULT TRUE,
@@ -105,6 +117,46 @@ async function initDB() {
       DO $$ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='members' AND column_name='revolution_start_date') THEN
           ALTER TABLE members ADD COLUMN revolution_start_date TEXT;
+        END IF;
+      END $$;
+
+      -- revolution_logs 테이블 스키마 보정 (5대 미션 컬럼 추가)
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='sleep_start') THEN
+          ALTER TABLE revolution_logs ADD COLUMN sleep_start TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='sleep_end') THEN
+          ALTER TABLE revolution_logs ADD COLUMN sleep_end TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='sleep_score') THEN
+          ALTER TABLE revolution_logs ADD COLUMN sleep_score INTEGER;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_breakfast') THEN
+          ALTER TABLE revolution_logs ADD COLUMN diet_breakfast BOOLEAN DEFAULT FALSE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_lunch') THEN
+          ALTER TABLE revolution_logs ADD COLUMN diet_lunch BOOLEAN DEFAULT FALSE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_dinner') THEN
+          ALTER TABLE revolution_logs ADD COLUMN diet_dinner BOOLEAN DEFAULT FALSE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_memo') THEN
+          ALTER TABLE revolution_logs ADD COLUMN diet_memo TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='water_cups') THEN
+          ALTER TABLE revolution_logs ADD COLUMN water_cups INTEGER DEFAULT 0;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='exercise_type') THEN
+          ALTER TABLE revolution_logs ADD COLUMN exercise_type TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='exercise_duration') THEN
+          ALTER TABLE revolution_logs ADD COLUMN exercise_duration INTEGER DEFAULT 0;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='exercise_intensity') THEN
+          ALTER TABLE revolution_logs ADD COLUMN exercise_intensity TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='gratitude_diary') THEN
+          ALTER TABLE revolution_logs ADD COLUMN gratitude_diary TEXT;
         END IF;
       END $$;
 

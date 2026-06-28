@@ -49,7 +49,7 @@
                         <button class="btn btn-secondary btn-sm" onclick="openRevReportModal()">📊 리포트</button>
                         <button class="btn btn-secondary btn-sm" onclick="stopRevolutionProgram()"
                             style="color:var(--danger); border-color:var(--danger);">🛑 중단</button>
-                        <button class="btn btn-primary btn-sm" onclick="openRevMissionModal()">📝 오늘 미션 체크</button>
+                        <button class="btn btn-primary btn-sm" onclick="openMissionPanel(new Date().toISOString().split('T')[0])">📝 오늘 미션 체크</button>
                     </div>
                 </div>
                 <!-- 프로그레스 바 -->
@@ -457,84 +457,129 @@
     </div>
 
 
-    <!-- 내 몸 혁명 오늘 미션 모달 -->
-    <div class="modal-overlay" id="revMissionModal">
-        <div class="modal" style="max-width:450px;">
-            <div class="modal-header">
-                <h2 class="modal-title">몸, 마음, 삶의근육</h2>
-                <button class="close-btn" onclick="closeRevMissionModal()">✕</button>
+    <!-- ====== 5대 미션 사이드 패널 ====== -->
+    <div id="missionPanelOverlay" class="mission-panel-overlay" onclick="closeMissionPanel()"></div>
+    <div id="missionPanel" class="mission-panel">
+        <div class="mission-panel-header">
+            <div>
+                <h2 class="mission-panel-title">📋 일일 미션</h2>
+                <p class="mission-panel-date" id="missionPanelDate">-</p>
             </div>
-            <div class="modal-body">
-                <p class="text-muted mb-2" id="revMissionDate">2026-03-01 (Day 1)</p>
+            <button class="close-btn" onclick="closeMissionPanel()">✕</button>
+        </div>
+        <div class="mission-panel-body">
 
-                <div class="mission-item">
-                    <div class="flex-between">
-                        <div>
-                            <span>🥛 단백질 셰이크 (목표: <span id="targetShake">4</span>회)</span>
-                            <div class="text-muted" style="font-size:0.75rem; margin-top:0.2rem;">
-                                하루 권장 단백질: <span id="targetProtein">0</span>g
-                            </div>
-                        </div>
-                        <div class="flex gap-1" style="align-items:center;">
-                            <button class="btn btn-secondary btn-sm" onclick="adjustShake(-1)">-</button>
-                            <span id="currentShake"
-                                style="font-weight:bold; min-width:20px; text-align:center;">0</span>
-                            <button class="btn btn-secondary btn-sm" onclick="adjustShake(1)">+</button>
-                        </div>
+            <!-- 1. 수면 -->
+            <div class="mission-section" style="border-left: 4px solid #8b5cf6;">
+                <div class="mission-section-header">
+                    <span class="mission-section-icon">😴</span>
+                    <h3 class="mission-section-title" style="color:#a78bfa;">수면</h3>
+                </div>
+                <div class="mission-form-row">
+                    <div class="mission-field">
+                        <label class="mission-label">취침 시간</label>
+                        <input type="time" id="msSleepStart" class="form-input mission-input">
+                    </div>
+                    <div class="mission-field">
+                        <label class="mission-label">기상 시간</label>
+                        <input type="time" id="msSleepEnd" class="form-input mission-input">
+                    </div>
+                    <div class="mission-field">
+                        <label class="mission-label">수면 점수 (0-10)</label>
+                        <input type="number" id="msSleepScore" min="0" max="10" class="form-input mission-input" placeholder="0">
                     </div>
                 </div>
+            </div>
 
-                <div class="mission-item" id="revFastingRow">
-                    <div class="flex-between">
-                        <span>⏳ 간헐적 단식 시간 (권장: <span id="targetFasting">14</span>시간+)</span>
-                        <div class="flex gap-1" style="align-items:center;">
-                            <input type="number" id="missFasting" class="form-input" style="width:70px; padding:0.3rem;"
-                                placeholder="0">
-                            <span class="text-muted">시간</span>
-                        </div>
-                    </div>
+            <!-- 2. 식단 -->
+            <div class="mission-section" style="border-left: 4px solid #f59e0b;">
+                <div class="mission-section-header">
+                    <span class="mission-section-icon">🍽️</span>
+                    <h3 class="mission-section-title" style="color:#fbbf24;">식단</h3>
                 </div>
-
-                <div class="mission-item">
-                    <label class="flex gap-2" style="align-items:center; cursor:pointer;">
-                        <input type="checkbox" id="missHiit" class="form-checkbox">
-                        <span>🏃 고강도 인터벌 운동 (HIIT) 완료</span>
+                <div class="mission-checks-row">
+                    <label class="mission-check-label">
+                        <input type="checkbox" id="msDietBreakfast" class="form-checkbox">
+                        <span>🌅 아침</span>
+                    </label>
+                    <label class="mission-check-label">
+                        <input type="checkbox" id="msDietLunch" class="form-checkbox">
+                        <span>☀️ 점심</span>
+                    </label>
+                    <label class="mission-check-label">
+                        <input type="checkbox" id="msDietDinner" class="form-checkbox">
+                        <span>🌙 저녁</span>
                     </label>
                 </div>
-
-                <div class="mission-item">
-                    <label class="flex gap-2" style="align-items:center; cursor:pointer;">
-                        <input type="checkbox" id="missNoSugar" class="form-checkbox" checked>
-                        <span>💧 수분 섭취 성공 (2L 이상)</span>
-                    </label>
-                </div>
-
-                <div class="mission-item">
-                    <label class="flex gap-2" style="align-items:center; cursor:pointer;">
-                        <input type="checkbox" id="missNoAlcohol" class="form-checkbox" checked>
-                        <span>🌙 수면 시간 달성 (7시간 이상)</span>
-                    </label>
-                </div>
-
-                <div class="mission-item" id="revPeriodMissionRow" style="display:none; background: rgba(255,107,129,0.05); border: 1px dashed rgba(255,107,129,0.3);">
-                    <div class="flex-between">
-                        <span style="color:var(--error); font-weight:600;">🩸 월경 기간 체크</span>
-                        <div class="flex gap-1" style="align-items:center;">
-                            <span id="revPeriodStatusText" style="font-size:0.85rem; color:var(--text-muted);">진행 중 아님</span>
-                            <button class="btn btn-icon btn-sm" onclick="openMenstruationModal()" title="관리">⚙️</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group mt-2">
-                    <label class="form-label">☀️ 아침긍정확언/컨디션 체크</label>
-                    <textarea class="form-textarea" id="revNotes" placeholder="오늘 느낀 몸의 변화나 메모를 남겨보세요."></textarea>
+                <div class="mission-field mt-2">
+                    <label class="mission-label">식단 메모</label>
+                    <textarea id="msDietMemo" class="form-textarea mission-input" rows="2" placeholder="오늘 먹은 것을 기록해 보세요..."></textarea>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeRevMissionModal()">닫기</button>
-                <button class="btn btn-primary" id="saveRevLogBtn" onclick="saveRevLog()">오늘 기록 저장</button>
+
+            <!-- 3. 물 섭취 -->
+            <div class="mission-section" style="border-left: 4px solid #3b82f6;">
+                <div class="mission-section-header">
+                    <span class="mission-section-icon">💧</span>
+                    <h3 class="mission-section-title" style="color:#60a5fa;">물 섭취</h3>
+                </div>
+                <div class="mission-water-counter">
+                    <button class="btn btn-secondary" onclick="adjustWater(-1)">−</button>
+                    <div class="mission-water-display">
+                        <span id="msWaterCups" class="mission-water-count">0</span>
+                        <span class="mission-water-label">컵</span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="adjustWater(1)">＋</button>
+                </div>
+                <div class="mission-water-dots" id="missionWaterDots">
+                    <!-- JS 렌더 -->
+                </div>
             </div>
+
+            <!-- 4. 운동 -->
+            <div class="mission-section" style="border-left: 4px solid #ef4444;">
+                <div class="mission-section-header">
+                    <span class="mission-section-icon">🏃</span>
+                    <h3 class="mission-section-title" style="color:#f87171;">운동</h3>
+                </div>
+                <div class="mission-form-row">
+                    <div class="mission-field">
+                        <label class="mission-label">운동 유형</label>
+                        <input type="text" id="msExerciseType" class="form-input mission-input" placeholder="걷기, 달리기, 헬스...">
+                    </div>
+                    <div class="mission-field">
+                        <label class="mission-label">시간 (분)</label>
+                        <input type="number" id="msExerciseDuration" min="0" class="form-input mission-input" placeholder="0">
+                    </div>
+                    <div class="mission-field">
+                        <label class="mission-label">강도</label>
+                        <select id="msExerciseIntensity" class="form-select mission-input">
+                            <option value="">선택</option>
+                            <option value="low">낮음 😌</option>
+                            <option value="medium">보통 💪</option>
+                            <option value="high">높음 🔥</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. 감사일기 -->
+            <div class="mission-section" style="border-left: 4px solid #10b981;">
+                <div class="mission-section-header">
+                    <span class="mission-section-icon">🙏</span>
+                    <h3 class="mission-section-title" style="color:#34d399;">감사일기</h3>
+                </div>
+                <div class="mission-field">
+                    <textarea id="msGratitudeDiary" class="form-textarea mission-input" rows="4" maxlength="500"
+                        placeholder="오늘 감사한 것들을 적어보세요. (최대 500자)"></textarea>
+                    <div class="mission-char-count"><span id="gratitudeCharCount">0</span>/500</div>
+                </div>
+            </div>
+
+        </div>
+        <div class="mission-panel-footer">
+            <button class="btn btn-secondary" onclick="closeMissionPanel()">닫기</button>
+            <button class="btn btn-primary" id="saveMissionBtn" onclick="saveMissionLog()">💾 전체 저장</button>
         </div>
     </div>
 

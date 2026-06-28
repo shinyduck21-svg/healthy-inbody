@@ -66,7 +66,20 @@ router.get('/status/:memberId', authenticate, async (req, res) => {
             success: true,
             isStarted: true,
             startDate: member.revolution_start_date,
-            todayLog: log || { shake_count: 0, hiit_done: false, no_sugar: true, no_alcohol: true, fasting_hours: 0 },
+            todayLog: log || {
+                sleep_start: '',
+                sleep_end: '',
+                sleep_score: null,
+                diet_breakfast: false,
+                diet_lunch: false,
+                diet_dinner: false,
+                diet_memo: '',
+                water_cups: 0,
+                exercise_type: '',
+                exercise_duration: 0,
+                exercise_intensity: '',
+                gratitude_diary: ''
+            },
             lastWeight: inbody ? inbody.weight : null
         });
     } catch (err) {
@@ -78,24 +91,50 @@ router.get('/status/:memberId', authenticate, async (req, res) => {
 // POST /api/revolution/log - 일일 로그 기록/수정
 router.post('/log', authenticate, async (req, res) => {
     try {
-        const { memberId, date, shake_count, hiit_done, no_sugar, no_alcohol, fasting_hours, weight, notes } = req.body;
+        const {
+            memberId, date,
+            sleep_start, sleep_end, sleep_score,
+            diet_breakfast, diet_lunch, diet_dinner, diet_memo,
+            water_cups,
+            exercise_type, exercise_duration, exercise_intensity,
+            gratitude_diary
+        } = req.body;
 
         if (req.user.role !== 'admin' && req.user.id !== parseInt(memberId)) {
             return res.status(403).json({ success: false, message: '권한이 없습니다.' });
         }
 
         await db.run(`
-            INSERT INTO revolution_logs (member_id, date, shake_count, hiit_done, no_sugar, no_alcohol, fasting_hours, weight, notes)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO revolution_logs (
+                member_id, date,
+                sleep_start, sleep_end, sleep_score,
+                diet_breakfast, diet_lunch, diet_dinner, diet_memo,
+                water_cups,
+                exercise_type, exercise_duration, exercise_intensity,
+                gratitude_diary
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             ON CONFLICT (member_id, date) DO UPDATE SET
-                shake_count = EXCLUDED.shake_count,
-                hiit_done = EXCLUDED.hiit_done,
-                no_sugar = EXCLUDED.no_sugar,
-                no_alcohol = EXCLUDED.no_alcohol,
-                fasting_hours = EXCLUDED.fasting_hours,
-                weight = EXCLUDED.weight,
-                notes = EXCLUDED.notes
-        `, [memberId, date, shake_count, hiit_done, no_sugar, no_alcohol, fasting_hours, weight, notes]);
+                sleep_start = EXCLUDED.sleep_start,
+                sleep_end = EXCLUDED.sleep_end,
+                sleep_score = EXCLUDED.sleep_score,
+                diet_breakfast = EXCLUDED.diet_breakfast,
+                diet_lunch = EXCLUDED.diet_lunch,
+                diet_dinner = EXCLUDED.diet_dinner,
+                diet_memo = EXCLUDED.diet_memo,
+                water_cups = EXCLUDED.water_cups,
+                exercise_type = EXCLUDED.exercise_type,
+                exercise_duration = EXCLUDED.exercise_duration,
+                exercise_intensity = EXCLUDED.exercise_intensity,
+                gratitude_diary = EXCLUDED.gratitude_diary
+        `, [
+            memberId, date,
+            sleep_start, sleep_end, sleep_score,
+            diet_breakfast, diet_lunch, diet_dinner, diet_memo,
+            water_cups,
+            exercise_type, exercise_duration, exercise_intensity,
+            gratitude_diary
+        ]);
 
         res.json({ success: true, message: '기록되었습니다.' });
     } catch (err) {

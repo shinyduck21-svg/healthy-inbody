@@ -483,7 +483,7 @@ function renderRecordsTable(records) {
                             placeholder="회원을 위한 피드백을 남겨주세요...">${r.admin_feedback || ''}</textarea>
                         <div class="flex-between mt-1">
                             <span class="text-muted" style="font-size:0.7rem;">${r.feedback_at ? '최종 피드백: ' + formatDate(r.feedback_at) : '피드백 대기 중'}</span>
-                            <button class="btn btn-primary btn-xs" onclick="saveFeedback(${r.id})">피드백 저장</button>
+                            <button class="btn btn-primary btn-sm" onclick="openMissionPanel(new Date().toISOString().split('T')[0])">📝 오늘 미션 체크</button>
                         </div>
                     </div>
                 `;
@@ -1001,123 +1001,98 @@ async function stopRevolutionProgram() {
     }
 }
 
-// 미션 모달 관련
-let currentShakeCount = 0;
+// ===== 사이드 패널 로직 (5대 미션) =====
+let currentWaterCups = 0;
+let currentMissionDate = '';
 
-async function openRevMissionModal(targetDateStr) {
+function openMissionPanel(dateStr) {
     if (!revolutionStatus) return;
 
-    const dateStr = targetDateStr || new Date().toISOString().split('T')[0];
     const targetDate = new Date(dateStr);
     const startDate = new Date(revolutionStatus.startDate);
-
-    // 차수 계산
-    const diffTime = targetDate - startDate;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const diffDays = Math.floor((targetDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
     if (diffDays < 1) {
         showToast('프로그램 시작 전 날짜입니다.', 'info');
         return;
     }
 
-    const log = revolutionLogs.find(l => l.date.split('T')[0] === dateStr) || {};
+    currentMissionDate = dateStr;
 
     const dayText = diffDays > 28 ? '완료' : `Day ${diffDays}`;
-    document.getElementById('revMissionDate').textContent = `${dateStr} (${dayText})`;
+    document.getElementById('missionPanelDate').textContent = `${dateStr} (${dayText})`;
 
-    // 목표 셰이크 계산
-    const target = (diffDays <= 3) ? 4 : (diffDays <= 7) ? 3 : 2;
+    const log = revolutionLogs.find(l => l.date.split('T')[0] === dateStr) || {};
 
-    // 단백질 목표 계산 (체중 * 1.2g)
-    const weight = revolutionStatus.lastWeight || (memberData ? memberData.weight : 0);
-    const proteinTarget = weight ? Math.round(weight * 1.2) : 0;
+    // 수면
+    document.getElementById('msSleepStart').value = log.sleep_start || '';
+    document.getElementById('msSleepEnd').value = log.sleep_end || '';
+    document.getElementById('msSleepScore').value = log.sleep_score ?? '';
 
-    // 권장 단식 시간 (주 1회 24시간 단식은 3주차부터)
-    const fastingTarget = (diffDays >= 15 && (diffDays % 7 === 1 || diffDays % 7 === 0)) ? 24 : 14;
+    // 식단
+    document.getElementById('msDietBreakfast').checked = !!log.diet_breakfast;
+    document.getElementById('msDietLunch').checked = !!log.diet_lunch;
+    document.getElementById('msDietDinner').checked = !!log.diet_dinner;
+    document.getElementById('msDietMemo').value = log.diet_memo || '';
 
-    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-    const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+    // 물 섭취
+    currentWaterCups = log.water_cups ?? 0;
+    updateWaterDisplay();
 
-    currentShakeCount = log.shake_count || 0;
+    // 운동
+    document.getElementById('msExerciseType').value = log.exercise_type || '';
+    document.getElementById('msExerciseDuration').value = log.exercise_duration || '';
+    document.getElementById('msExerciseIntensity').value = log.exercise_intensity || '';
 
-    setTxt('targetShake', target);
-    setTxt('targetProtein', proteinTarget);
-    const fastingRow = document.getElementById('revFastingRow');
-    if (fastingRow) {
-        if (diffDays < 8) {
-            fastingRow.style.display = 'none';
-        } else {
-            fastingRow.style.display = 'block';
-            setTxt('targetFasting', fastingTarget);
-        }
+    // 감사일기
+    const gratitude = document.getElementById('msGratitudeDiary');
+    gratitude.value = log.gratitude_diary || '';
+    document.getElementById('gratitudeCharCount').textContent = gratitude.value.length;
+
+    document.getElementById('missionPanelOverlay').classList.add('active');
+    document.getElementById('missionPanel').classList.add('active');
+}
+
+function closeMissionPanel() {
+    document.getElementById('missionPanelOverlay').classList.remove('active');
+    document.getElementById('missionPanel').classList.remove('active');
+}
+
+function adjustWater(val) {
+    currentWaterCups = Math.max(0, Math.min(10, currentWaterCups + val));
+    updateWaterDisplay();
+}
+
+function updateWaterDisplay() {
+    document.getElementById('msWaterCups').textContent = currentWaterCups;
+    const dotsEl = document.getElementById('missionWaterDots');
+    if (!dotsEl) return;
+    let html = '';
+    for (let i = 0; i < 10; i++) {
+        html += `<div class="water-dot ${i < currentWaterCups ? 'filled' : ''}"></div>`;
     }
-    setTxt('currentShake', currentShakeCount);
-    setVal('missFasting', log.fasting_hours || '');
-    setChk('missHiit', log.hiit_done);
-    setChk('missNoSugar', log.no_sugar !== false);
-    setChk('missNoAlcohol', log.no_alcohol !== false);
-    setVal('revNotes', log.notes || '');
-
-    // 월경 상태 체크 (여성 회원 전용)
-    const periodRow = document.getElementById('revPeriodMissionRow');
-    const periodStatus = document.getElementById('revPeriodStatusText');
-    if (periodRow && memberData && memberData.gender === 'F') {
-        periodRow.style.display = 'block';
-        
-        let isDuring = false;
-        menstruationHistory.forEach(h => {
-            if (dateStr >= h.start_date) {
-                if (h.end_date && dateStr <= h.end_date) isDuring = true;
-                else if (!h.end_date) {
-                    const start = new Date(h.start_date);
-                    const current = new Date(dateStr);
-                    const diff = (current - start) / (1000 * 60 * 60 * 24);
-                    if (diff >= 0 && diff < 7) isDuring = true;
-                }
-            }
-        });
-        
-        if (isDuring) {
-            periodStatus.textContent = '월경 기간 중 🩸';
-            periodStatus.style.color = 'var(--error)';
-        } else {
-            periodStatus.textContent = '진행 중 아님';
-            periodStatus.style.color = 'var(--text-muted)';
-        }
-    } else if (periodRow) {
-        periodRow.style.display = 'none';
-    }
-
-    const modal = document.getElementById('revMissionModal');
-    if (modal) modal.classList.add('active');
+    dotsEl.innerHTML = html;
 }
 
-function closeRevMissionModal() {
-    document.getElementById('revMissionModal').classList.remove('active');
-}
-
-function adjustShake(val) {
-    currentShakeCount = Math.max(0, currentShakeCount + val);
-    document.getElementById('currentShake').textContent = currentShakeCount;
-}
-
-async function saveRevLog() {
-    const dateText = document.getElementById('revMissionDate').textContent;
-    const targetDateStr = dateText.split(' ')[0];
-
+async function saveMissionLog() {
     const body = {
         memberId: MEMBER_ID,
-        date: targetDateStr,
-        shake_count: currentShakeCount,
-        fasting_hours: parseInt(document.getElementById('missFasting').value) || 0,
-        hiit_done: document.getElementById('missHiit').checked,
-        no_sugar: document.getElementById('missNoSugar').checked,
-        no_alcohol: document.getElementById('missNoAlcohol').checked,
-        notes: document.getElementById('revNotes').value.trim()
+        date: currentMissionDate,
+        sleep_start: document.getElementById('msSleepStart').value || null,
+        sleep_end: document.getElementById('msSleepEnd').value || null,
+        sleep_score: parseInt(document.getElementById('msSleepScore').value) || null,
+        diet_breakfast: document.getElementById('msDietBreakfast').checked,
+        diet_lunch: document.getElementById('msDietLunch').checked,
+        diet_dinner: document.getElementById('msDietDinner').checked,
+        diet_memo: document.getElementById('msDietMemo').value.trim() || null,
+        water_cups: currentWaterCups,
+        exercise_type: document.getElementById('msExerciseType').value.trim() || null,
+        exercise_duration: parseInt(document.getElementById('msExerciseDuration').value) || null,
+        exercise_intensity: document.getElementById('msExerciseIntensity').value || null,
+        gratitude_diary: document.getElementById('msGratitudeDiary').value.trim() || null
     };
 
-    const btn = document.getElementById('saveRevLogBtn');
+    const btn = document.getElementById('saveMissionBtn');
     btn.innerHTML = '<span class="spinner"></span>';
     btn.disabled = true;
 
@@ -1129,14 +1104,24 @@ async function saveRevLog() {
         if (!res) return;
         const data = await res.json();
         if (data.success) {
-            showToast('오늘의 미션이 기록되었습니다.', 'success');
-            closeRevMissionModal();
-            await loadRevolutionStatus();
+            showToast('미션이 저장되었습니다! 🎉', 'success');
+            closeMissionPanel();
+            // 달력 새로고침
+            const logsRes = await apiFetch(`/api/revolution/logs/${MEMBER_ID}`);
+            if (logsRes) {
+                const logsData = await logsRes.json();
+                if (logsData.success) {
+                    revolutionLogs = logsData.data;
+                    renderRevCalendar();
+                }
+            }
+        } else {
+            showToast(data.message || '저장에 실패했습니다.', 'error');
         }
     } catch (err) {
         showToast('저장 중 오류가 발생했습니다.', 'error');
     } finally {
-        btn.innerHTML = '오늘 기록 저장';
+        btn.innerHTML = '💾 전체 저장';
         btn.disabled = false;
     }
 }
@@ -1305,7 +1290,7 @@ function renderRevCalendar() {
 
         html += `
             <div class="rev-cal-day ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''} ${isMissed ? 'missed' : ''} ${isStartDate ? 'start-day' : ''}" 
-                 onclick="openRevMissionModal('${dateStr}')">
+                 onclick="openMissionPanel('${dateStr}')">
                 ${d}
                 ${isPeriodDay ? '<div class="period-dot" title="월경 기간">🩸</div>' : ''}
                 ${isPredictedDate ? '<div class="period-dot predicted" title="월경 예정일">📅</div>' : ''}
@@ -1610,5 +1595,16 @@ async function deleteMenstruationLog(id) {
         if (btn) btn.disabled = false;
     }
 }
+
+// 감사일기 글자 수 카운터
+document.addEventListener('DOMContentLoaded', () => {
+    const gratitudeEl = document.getElementById('msGratitudeDiary');
+    const charCountEl = document.getElementById('gratitudeCharCount');
+    if (gratitudeEl && charCountEl) {
+        gratitudeEl.addEventListener('input', () => {
+            charCountEl.textContent = gratitudeEl.value.length;
+        });
+    }
+});
 
 init();
