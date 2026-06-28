@@ -83,6 +83,18 @@
             display: block;
         }
 
+        .feature-section-intro {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .category-subtitle {
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0.75rem auto 0;
+            line-height: 1.7;
+        }
+
         /* 배경 장식 */
         .blob {
             position: absolute;
@@ -160,7 +172,9 @@
             <div class="hero-content">
                 <h1 class="hero-title">몸, 마음, 삶의 근육은 하나 !!<br><span class="text-gradient">몸이 안정되면<br>삶이 흔들리지 않는다.</span>
                 </h1>
-                <p class="hero-subtitle">인바디 기록부터 4주 신진대사 리셋까지, 몽핏과 함께 <span class="text-gradient">흔들리지 않는 나</span>를 만들어 보세요.</p>
+                <p class="hero-subtitle">인바디 기록부터 4주 신진대사 리셋까지,
+                    <br>몽핏과 함께 <span class="text-gradient">흔들리지 않는 나</span>를 만들어 보세요.
+                </p>
                 <div class="flex gap-1" style="justify-content:center;">
                     <button class="btn btn-primary btn-xl" id="startBtn">지금 시작하기</button>
                 </div>
@@ -169,9 +183,34 @@
 
         <section class="features">
             <div class="container">
+                <div class="feature-section-intro">
+                    <h2 class="section-title">주요 기능</h2>
+                    <p class="text-muted">완벽한 건강 관리를 위한 올인원 솔루션</p>
+
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <span class="feature-icon">📊</span>
+                            <h3>인바디 기록 관리</h3>
+                            <p class="text-muted">변화하는 체성분을 직관적인 그래프로 확인하고 관리하세요.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-icon">🚀</span>
+                            <h3>4주 리셋 프로그램</h3>
+                            <p class="text-muted">수면, 식단, 물 섭취, 운동, 감사일기를 매일 기록하며 건강 루틴을 점검합니다.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-icon">📅</span>
+                            <h3>여성 주기 관리</h3>
+                            <p class="text-muted">월경 주기를 기반으로 한 맞춤형 컨디션 케어를 지원합니다.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="category-header">
                     <span class="category-tag">CATEGORIES</span>
-                    <h2 class="category-title">5개 카테고리</h2>
+                    <h2 class="category-title">매일 기록하는 5개 카테고리</h2>
+                    <p class="category-subtitle">복잡한 건강 관리를 하루 미션 단위로 나눴습니다. 오늘의 컨디션과 생활 습관을 짧게 남기면, 내 몸의 변화를 한눈에 확인할 수
+                        있습니다.</p>
                 </div>
 
                 <div class="category-list">
@@ -180,7 +219,7 @@
                             <span class="category-icon-emoji">😴</span>
                             <div class="category-info">
                                 <h3 class="category-name">수면</h3>
-                                <p class="category-desc">취침/기상 시간  ·  수면 점수</p>
+                                <p class="category-desc">잠든 시간, 일어난 시간, 수면 점수를 기록해 회복 상태를 확인합니다.</p>
                             </div>
                         </div>
                     </div>
@@ -190,7 +229,7 @@
                             <span class="category-icon-emoji">🍽️</span>
                             <div class="category-info">
                                 <h3 class="category-name">식단</h3>
-                                <p class="category-desc">아침/점심/저녁/단식 체크  ·  메모</p>
+                                <p class="category-desc">아침, 점심, 저녁 사진과 단식 여부를 남겨 식사 패턴을 쉽게 돌아봅니다.</p>
                             </div>
                         </div>
                     </div>
@@ -200,7 +239,7 @@
                             <span class="category-icon-emoji">💧</span>
                             <div class="category-info">
                                 <h3 class="category-name">물 섭취</h3>
-                                <p class="category-desc">컵 수 카운터 (0-10)</p>
+                                <p class="category-desc">하루 물 섭취량을 컵 수로 간단히 체크해 기본 루틴을 놓치지 않습니다.</p>
                             </div>
                         </div>
                     </div>
@@ -210,7 +249,7 @@
                             <span class="category-icon-emoji">🏃</span>
                             <div class="category-info">
                                 <h3 class="category-name">운동</h3>
-                                <p class="category-desc">유형  ·  시간(분)  ·  강도</p>
+                                <p class="category-desc">운동 종류, 시간, 강도를 기록해 활동량과 꾸준함을 관리합니다.</p>
                             </div>
                         </div>
                     </div>
@@ -220,7 +259,7 @@
                             <span class="category-icon-emoji">🙏</span>
                             <div class="category-info">
                                 <h3 class="category-name">감사일기</h3>
-                                <p class="category-desc">자유 텍스트 (최대 500자)</p>
+                                <p class="category-desc">하루를 정리하며 감사한 일을 짧게 남겨 마음의 루틴까지 챙깁니다.</p>
                             </div>
                         </div>
                     </div>
