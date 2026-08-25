@@ -83,6 +83,9 @@ async function initDB() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='inbody_records' AND column_name='feedback_at') THEN
           ALTER TABLE inbody_records ADD COLUMN feedback_at TIMESTAMPTZ;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='inbody_records' AND column_name='photo_url') THEN
+          ALTER TABLE inbody_records ADD COLUMN photo_url TEXT;
+        END IF;
       END $$;
 
       -- 마이옵티멀 로그 테이블

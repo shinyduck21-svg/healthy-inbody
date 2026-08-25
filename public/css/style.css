@@ -2330,6 +2330,63 @@ canvas {
     margin-top: 0.75rem;
 }
 
+.inbody-photo-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px dashed rgba(99, 102, 241, 0.35);
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 8px;
+}
+.inbody-photo-preview {
+    min-height: 120px;
+    max-height: 220px;
+    border-radius: 8px;
+    background: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+.inbody-photo-preview:empty::before {
+    content: "📷 인바디 결과지/화면 사진을 등록할 수 있습니다.";
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+.inbody-photo-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 4px;
+    cursor: zoom-in;
+}
+.inbody-thumb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--primary);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.inbody-thumb-btn:hover {
+    background: var(--primary);
+    color: #fff;
+}
+.inbody-thumb-img {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
 @media (max-width: 480px) {
     .mission-panel {
         width: 100vw;
@@ -2345,3 +2402,4 @@ canvas {
         gap: 0.5rem;
     }
 }
+

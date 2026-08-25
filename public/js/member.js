@@ -501,7 +501,7 @@ function renderRecordsTable(records) {
                             placeholder="회원을 위한 피드백을 남겨주세요...">${r.admin_feedback || ''}</textarea>
                         <div class="flex-between mt-1">
                             <span class="text-muted" style="font-size:0.7rem;">${r.feedback_at ? '최종 피드백: ' + formatDate(r.feedback_at) : '피드백 대기 중'}</span>
-                            <button class="btn btn-primary btn-sm" onclick="openMissionPanel(new Date().toISOString().split('T')[0])">📝 오늘 미션 체크</button>
+                            <button class="btn btn-primary btn-sm" onclick="saveFeedback(${r.id})">피드백 저장</button>
                         </div>
                     </div>
                 `;
@@ -526,6 +526,12 @@ function renderRecordsTable(records) {
         }
 
         const analysisBadge = isComplete ? `<span class="badge badge-success" style="font-size:0.6rem; margin-left:5px; vertical-align:middle;">정밀 분석</span>` : '';
+        const photoBtn = r.photo_url ? `
+            <button class="inbody-thumb-btn" onclick="openPhotoModal('${r.photo_url}', '인바디 용지 사진 (${formatDate(r.measured_at)})')">
+                <img src="${r.photo_url}" class="inbody-thumb-img" alt="사진">
+                <span>사진</span>
+            </button>
+        ` : '';
 
         return `
         <tr>
@@ -533,14 +539,15 @@ function renderRecordsTable(records) {
             <div class="record-row-content">
                 <table style="width:100%; border:none;">
                     <tr>
-                      <td style="width:15%; border:none;"><strong>${formatDate(r.measured_at)}</strong>${analysisBadge}</td>
-                      <td style="width:12%; border:none;">${fmtNum(r.weight)}</td>
-                      <td style="width:12%; border:none;">${fmtNum(r.skeletal_muscle)}</td>
-                      <td style="width:12%; border:none;">${fmtNum(r.body_fat)}</td>
-                      <td style="width:12%; border:none;">${fmtNum(r.body_fat_pct)}</td>
-                      <td style="width:12%; border:none;">${fmtNum(r.visceral_fat)}</td>
-                      <td style="width:25%; border:none; text-align:right;">
-                        <div class="flex gap-1" style="justify-content:flex-end;">
+                      <td style="width:18%; border:none;"><strong>${formatDate(r.measured_at)}</strong>${analysisBadge}</td>
+                      <td style="width:11%; border:none;">${fmtNum(r.weight)}</td>
+                      <td style="width:11%; border:none;">${fmtNum(r.skeletal_muscle)}</td>
+                      <td style="width:11%; border:none;">${fmtNum(r.body_fat)}</td>
+                      <td style="width:11%; border:none;">${fmtNum(r.body_fat_pct)}</td>
+                      <td style="width:11%; border:none;">${fmtNum(r.visceral_fat)}</td>
+                      <td style="width:27%; border:none; text-align:right;">
+                        <div class="flex gap-1" style="justify-content:flex-end; align-items:center;">
+                          ${photoBtn}
                           <button class="btn btn-icon btn-sm" title="편집" onclick="openEditInbody(${r.id})">✏️</button>
                           <button class="btn btn-icon btn-sm" title="삭제" onclick="openDeleteRecord(${r.id})">🗑️</button>
                         </div>
@@ -577,6 +584,7 @@ async function saveFeedback(id) {
         body_fat_pct: r.body_fat_pct,
         visceral_fat: r.visceral_fat,
         notes: r.notes,
+        photo_url: r.photo_url,
         admin_feedback: feedbackText
     };
 
@@ -609,6 +617,65 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// ===== 인바디 사진 핸들러 =====
+let selectedInbodyFile = null;
+
+function setInbodyPhotoPreview(photoUrl) {
+    const previewEl = document.getElementById('ibPhotoPreview');
+    const urlEl = document.getElementById('ibPhotoUrl');
+    const removeBtn = document.getElementById('ibRemovePhotoBtn');
+    if (urlEl) urlEl.value = photoUrl || '';
+    if (!previewEl) return;
+    previewEl.innerHTML = '';
+
+    if (photoUrl) {
+        const img = document.createElement('img');
+        img.src = photoUrl;
+        img.alt = '인바디 용지 사진';
+        img.onclick = () => openPhotoModal(photoUrl, '인바디 용지 사진');
+        previewEl.appendChild(img);
+        if (removeBtn) removeBtn.style.display = 'inline-block';
+    } else {
+        if (removeBtn) removeBtn.style.display = 'none';
+    }
+}
+
+async function handleInbodyPhotoSelect(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        showToast('이미지 파일만 업로드할 수 있습니다.', 'error');
+        input.value = '';
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('사진은 10MB 이하만 업로드할 수 있습니다.', 'error');
+        input.value = '';
+        return;
+    }
+
+    try {
+        const compressed = await resizeMealPhoto(file);
+        selectedInbodyFile = {
+            blob: compressed,
+            name: file.name
+        };
+        const localUrl = URL.createObjectURL(compressed);
+        setInbodyPhotoPreview(localUrl);
+        showToast('사진이 선택되었습니다. 저장 시 업로드됩니다.', 'info');
+    } catch (err) {
+        showToast('사진 처리 중 오류가 발생했습니다.', 'error');
+        input.value = '';
+    }
+}
+
+function clearInbodyPhoto() {
+    selectedInbodyFile = null;
+    const input = document.getElementById('ibPhotoInput');
+    if (input) input.value = '';
+    setInbodyPhotoPreview('');
+}
+
 // ===== 인바디 추가 모달 =====
 document.getElementById('addInbodyBtn').addEventListener('click', () => {
     document.getElementById('inbodyModalTitle').textContent = '인바디 기록 추가';
@@ -625,6 +692,7 @@ function closeInbodyModal() {
 function clearInbodyForm() {
     ['ibMeasuredAt', 'ibWeight', 'ibSkeletal', 'ibBodyFat', 'ibBodyFatPct', 'ibVisceralFat', 'ibNotes']
         .forEach(id => document.getElementById(id).value = '');
+    clearInbodyPhoto();
 }
 
 // ===== 인바디 편집 모달 =====
@@ -641,6 +709,12 @@ function openEditInbody(id) {
     document.getElementById('ibBodyFatPct').value = r.body_fat_pct ?? '';
     document.getElementById('ibVisceralFat').value = r.visceral_fat ?? '';
     document.getElementById('ibNotes').value = r.notes ?? '';
+    
+    selectedInbodyFile = null;
+    const input = document.getElementById('ibPhotoInput');
+    if (input) input.value = '';
+    setInbodyPhotoPreview(r.photo_url || '');
+
     document.getElementById('inbodyModal').classList.add('active');
 }
 
@@ -660,28 +734,53 @@ async function saveInbody() {
         }
     }
 
-    const getVal = (id) => {
-        const v = document.getElementById(id).value;
-        return (v === '' || v === null) ? null : v;
-    };
-
-    const body = {
-        measured_at,
-        weight: getVal('ibWeight'),
-        skeletal_muscle: getVal('ibSkeletal'),
-        body_fat: getVal('ibBodyFat'),
-        body_fat_pct: getVal('ibBodyFatPct'),
-        visceral_fat: getVal('ibVisceralFat'),
-        notes: getVal('ibNotes'),
-    };
-
-    console.log('[DEBUG] Saving InBody Record:', { id, body });
-
     const btn = document.getElementById('saveInbodyBtn');
     btn.innerHTML = '<span class="spinner"></span>';
     btn.disabled = true;
 
     try {
+        let photoUrl = document.getElementById('ibPhotoUrl').value;
+        // 새로 선택된 사진이 있는 경우 먼저 업로드
+        if (selectedInbodyFile) {
+            const data = await readBlobAsBase64(selectedInbodyFile.blob);
+            const previousPhotoUrl = id ? (inbodyRecords.find(r => r.id === parseInt(id))?.photo_url || null) : null;
+            const uploadRes = await apiFetch('/api/inbody/photo', {
+                method: 'POST',
+                body: JSON.stringify({
+                    memberId: MEMBER_ID,
+                    measuredAt: measured_at,
+                    fileName: selectedInbodyFile.name,
+                    mimeType: 'image/jpeg',
+                    previousPhotoUrl,
+                    data
+                })
+            });
+            if (!uploadRes) throw new Error('사진 업로드 요청에 실패했습니다.');
+            const uploadData = await uploadRes.json();
+            if (!uploadData.success) {
+                throw new Error(uploadData.message || '사진 업로드 실패');
+            }
+            photoUrl = uploadData.photoUrl;
+        }
+
+        const getVal = (id) => {
+            const v = document.getElementById(id).value;
+            return (v === '' || v === null) ? null : v;
+        };
+
+        const body = {
+            measured_at,
+            weight: getVal('ibWeight'),
+            skeletal_muscle: getVal('ibSkeletal'),
+            body_fat: getVal('ibBodyFat'),
+            body_fat_pct: getVal('ibBodyFatPct'),
+            visceral_fat: getVal('ibVisceralFat'),
+            notes: getVal('ibNotes'),
+            photo_url: photoUrl || null
+        };
+
+        console.log('[DEBUG] Saving InBody Record:', { id, body });
+
         const url = id ? `/api/inbody/${id}` : `/api/inbody/member/${MEMBER_ID}`;
         const method = id ? 'PUT' : 'POST';
         const res = await apiFetch(url, { method, body: JSON.stringify(body) });
@@ -690,13 +789,14 @@ async function saveInbody() {
 
         if (data.success) {
             showToast(id ? '기록이 수정되었습니다.' : '기록이 추가되었습니다.', 'success');
+            selectedInbodyFile = null;
             closeInbodyModal();
             await loadRecords();
         } else {
             showToast(data.message, 'error');
         }
     } catch (err) {
-        showToast('저장 중 오류가 발생했습니다.', 'error');
+        showToast(err.message || '저장 중 오류가 발생했습니다.', 'error');
     } finally {
         btn.innerHTML = '저장';
         btn.disabled = false;
@@ -1114,12 +1214,18 @@ function setMealPhotoPreview(meal, photoUrl) {
     previewEl.appendChild(image);
 }
 
-function openMealPhotoModal(photoUrl) {
+function openPhotoModal(photoUrl, title = '사진 보기') {
     const modal = document.getElementById('mealPhotoModal');
     const image = document.getElementById('mealPhotoModalImage');
+    const titleEl = document.getElementById('mealPhotoModalTitle');
     if (!modal || !image) return;
+    if (titleEl) titleEl.textContent = title;
     image.src = photoUrl;
     modal.classList.add('active');
+}
+
+function openMealPhotoModal(photoUrl) {
+    openPhotoModal(photoUrl, '식단 사진');
 }
 
 function closeMealPhotoModal() {
