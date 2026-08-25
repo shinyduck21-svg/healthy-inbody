@@ -68,6 +68,11 @@ const MEAL_PHOTO_CONFIG = {
         urlId: 'msDietLunchPhotoUrl',
         previewId: 'msDietLunchPhotoPreview'
     },
+    snack: {
+        inputId: 'msDietSnackPhoto',
+        urlId: 'msDietSnackPhotoUrl',
+        previewId: 'msDietSnackPhotoPreview'
+    },
     dinner: {
         inputId: 'msDietDinnerPhoto',
         urlId: 'msDietDinnerPhotoUrl',
@@ -1151,6 +1156,7 @@ function openMissionPanel(dateStr) {
     document.getElementById('msDietFasting').checked = !!log.diet_fasting;
     setMealPhotoPreview('breakfast', log.diet_breakfast_photo_url || '');
     setMealPhotoPreview('lunch', log.diet_lunch_photo_url || '');
+    setMealPhotoPreview('snack', log.diet_snack_photo_url || '');
     setMealPhotoPreview('dinner', log.diet_dinner_photo_url || '');
     document.getElementById('msDietMemo').value = log.diet_memo || '';
 
@@ -1342,6 +1348,7 @@ async function saveMissionLog() {
         diet_fasting: document.getElementById('msDietFasting').checked,
         diet_breakfast_photo_url: document.getElementById('msDietBreakfastPhotoUrl').value || null,
         diet_lunch_photo_url: document.getElementById('msDietLunchPhotoUrl').value || null,
+        diet_snack_photo_url: document.getElementById('msDietSnackPhotoUrl').value || null,
         diet_dinner_photo_url: document.getElementById('msDietDinnerPhotoUrl').value || null,
         diet_memo: document.getElementById('msDietMemo').value.trim() || null,
         water_cups: currentWaterCups,

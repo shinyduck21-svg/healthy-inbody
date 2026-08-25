@@ -7,6 +7,7 @@ const { getPhotoExt, uploadPhotoToStorage, deletePhotoFromStorage } = require('.
 const MEAL_PHOTO_FIELDS = {
     breakfast: 'diet_breakfast_photo_url',
     lunch: 'diet_lunch_photo_url',
+    snack: 'diet_snack_photo_url',
     dinner: 'diet_dinner_photo_url'
 };
 
@@ -83,6 +84,7 @@ router.get('/status/:memberId', authenticate, async (req, res) => {
                 diet_fasting: false,
                 diet_breakfast_photo_url: '',
                 diet_lunch_photo_url: '',
+                diet_snack_photo_url: '',
                 diet_dinner_photo_url: '',
                 diet_memo: '',
                 water_cups: 0,
@@ -106,7 +108,7 @@ router.post('/log', authenticate, async (req, res) => {
             memberId, date,
             sleep_start, sleep_end, sleep_score,
             diet_breakfast, diet_lunch, diet_dinner, diet_fasting,
-            diet_breakfast_photo_url, diet_lunch_photo_url, diet_dinner_photo_url,
+            diet_breakfast_photo_url, diet_lunch_photo_url, diet_snack_photo_url, diet_dinner_photo_url,
             diet_memo,
             water_cups,
             exercise_type, exercise_duration, exercise_intensity,
@@ -122,13 +124,13 @@ router.post('/log', authenticate, async (req, res) => {
                 member_id, date,
                 sleep_start, sleep_end, sleep_score,
                 diet_breakfast, diet_lunch, diet_dinner, diet_fasting,
-                diet_breakfast_photo_url, diet_lunch_photo_url, diet_dinner_photo_url,
+                diet_breakfast_photo_url, diet_lunch_photo_url, diet_snack_photo_url, diet_dinner_photo_url,
                 diet_memo,
                 water_cups,
                 exercise_type, exercise_duration, exercise_intensity,
                 gratitude_diary
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
             ON CONFLICT (member_id, date) DO UPDATE SET
                 sleep_start = EXCLUDED.sleep_start,
                 sleep_end = EXCLUDED.sleep_end,
@@ -139,6 +141,7 @@ router.post('/log', authenticate, async (req, res) => {
                 diet_fasting = EXCLUDED.diet_fasting,
                 diet_breakfast_photo_url = EXCLUDED.diet_breakfast_photo_url,
                 diet_lunch_photo_url = EXCLUDED.diet_lunch_photo_url,
+                diet_snack_photo_url = EXCLUDED.diet_snack_photo_url,
                 diet_dinner_photo_url = EXCLUDED.diet_dinner_photo_url,
                 diet_memo = EXCLUDED.diet_memo,
                 water_cups = EXCLUDED.water_cups,
@@ -150,7 +153,7 @@ router.post('/log', authenticate, async (req, res) => {
             memberId, date,
             sleep_start, sleep_end, sleep_score,
             diet_breakfast, diet_lunch, diet_dinner, diet_fasting,
-            diet_breakfast_photo_url, diet_lunch_photo_url, diet_dinner_photo_url,
+            diet_breakfast_photo_url, diet_lunch_photo_url, diet_snack_photo_url, diet_dinner_photo_url,
             diet_memo,
             water_cups,
             exercise_type, exercise_duration, exercise_intensity,

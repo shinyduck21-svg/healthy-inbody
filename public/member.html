@@ -522,6 +522,12 @@
                         <input type="file" id="msDietLunchPhoto" accept="image/*" hidden onchange="uploadMealPhoto('lunch', this)" onclick="event.stopPropagation()">
                         <div id="msDietLunchPhotoPreview" class="meal-photo-preview"></div>
                     </button>
+                    <button type="button" class="meal-photo-field" onclick="document.getElementById('msDietSnackPhoto').click()">
+                        <span class="meal-photo-label">🍪 간식</span>
+                        <input type="hidden" id="msDietSnackPhotoUrl">
+                        <input type="file" id="msDietSnackPhoto" accept="image/*" hidden onchange="uploadMealPhoto('snack', this)" onclick="event.stopPropagation()">
+                        <div id="msDietSnackPhotoPreview" class="meal-photo-preview"></div>
+                    </button>
                     <button type="button" class="meal-photo-field" onclick="document.getElementById('msDietDinnerPhoto').click()">
                         <span class="meal-photo-label">🌙 저녁</span>
                         <input type="hidden" id="msDietDinnerPhotoUrl">

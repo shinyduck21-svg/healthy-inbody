@@ -159,6 +159,9 @@ async function initDB() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_dinner_photo_url') THEN
           ALTER TABLE revolution_logs ADD COLUMN diet_dinner_photo_url TEXT;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_snack_photo_url') THEN
+          ALTER TABLE revolution_logs ADD COLUMN diet_snack_photo_url TEXT;
+        END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='revolution_logs' AND column_name='diet_memo') THEN
           ALTER TABLE revolution_logs ADD COLUMN diet_memo TEXT;
         END IF;
